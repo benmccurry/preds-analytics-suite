@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smashville Hockey Ops — Analytics Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  /* ---- light theme (matches uploaded suite) ---- */
+  --ink:#1b2a4a; --ink-2:#2f3e5c; --slate:#5a6b85; --muted:#8493a8;
+  --line:#e6eaf0; --line-soft:#eef1f6; --bg:#f4f6f9; --panel:#fff; --field:#f1f3f7;
+  /* ---- Preds palette: navy primary, gold secondary ---- */
+  --navy:#173a5e; --navy-deep:#0f2742; --navy-soft:#5a7da3;
+  --gold:#FFB81C; --gold-deep:#cc9100; --gold-bg:#fff6e0;
+  --green:#3f8f4f; --green-bg:#e6f3e8;
+  --amber:#d99814; --amber-bg:#fdf3df;
+  --red:#c8362f; --red-bg:#fdecec;
+  --blue:#2f6fb0; --blue-bg:#e8f1fb;
+  /* ---- dark sidebar shell (from upload) ---- */
+  --side:#15293f; --side-2:#1b3147; --side-ink:#e7edf5; --side-muted:#8aa0bd;
+  --shadow:0 1px 2px rgba(27,42,74,.05),0 6px 22px rgba(27,42,74,.06);
+  --shadow-lg:0 2px 4px rgba(27,42,74,.06),0 14px 40px rgba(27,42,74,.10);
+  --r:16px; --r-sm:10px; --r-xs:7px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Sora',system-ui,sans-serif;
+  --body:'Inter Tight',system-ui,sans-serif;
+  --side-w:250px; --top-h:62px;
+  --tip-bg:#1b2a4a; --tip-fg:#fff;
+}
+html[data-theme="dark"]{
+  --ink:#eaf0fa; --ink-2:#cdd8ea; --slate:#9fb0cb; --muted:#7e8ca8;
+  --line:#243349; --line-soft:#1c2940; --bg:#0c1726; --panel:#13223a; --field:#172a44;
+  --navy:#2f6fb0; --navy-deep:#102640; --navy-soft:#7fa8d4;
+  --gold-bg:#2c2410; --green-bg:#16301c; --amber-bg:#2e2510; --red-bg:#321713; --blue-bg:#13243d;
+  --side:#0a1422; --side-2:#0f1d31;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 22px rgba(0,0,0,.35);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.35),0 14px 40px rgba(0,0,0,.45);
+  --tip-bg:#0a1422;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink-2);font-family:var(--body);font-size:14px;
+  line-height:1.55;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+h1,h2,h3,h4{font-family:var(--disp);color:var(--ink);letter-spacing:-.01em}
+a{color:var(--navy);text-decoration:none}
+
+/* ============ SHELL ============ */
+.shell{display:flex;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--side-w);z-index:50;
+  background:linear-gradient(180deg,var(--side),var(--side-2));color:var(--side-ink);
+  display:flex;flex-direction:column;overflow-y:auto}
+.brand{padding:18px 18px 16px;display:flex;align-items:center;gap:11px;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.brand .logo{width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  display:grid;place-items:center;color:var(--navy-deep);font-family:var(--disp);
+  font-weight:800;font-size:16px}
+.brand .bt{font-family:var(--disp);font-weight:700;font-size:14px;color:#fff;line-height:1.2}
+.brand .bs{font-family:var(--mono);font-size:9px;color:var(--side-muted);
+  text-transform:uppercase;letter-spacing:.14em;margin-top:3px}
+nav{padding:12px 10px;flex:1}
+.nav-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.14em;
+  color:var(--side-muted);text-transform:uppercase;padding:14px 12px 6px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;
+  cursor:pointer;color:var(--side-muted);font-weight:500;font-size:13px;
+  transition:background .15s,color .15s;margin:1px 0}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.nav-item.active{background:rgba(255,184,28,.14);color:var(--gold)}
+.nav-item.active .ic{stroke:var(--gold)}
+.nav-item .ic{width:17px;height:17px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.7}
+.nav-item .n{margin-left:auto;font-family:var(--mono);font-size:9px;opacity:.6}
+.side-foot{padding:12px;border-top:1px solid rgba(255,255,255,.06)}
+.theme-tog{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;
+  color:var(--side-muted);font-family:var(--body);font-size:12px;cursor:pointer;transition:.15s}
+.theme-tog:hover{background:rgba(255,255,255,.05);color:#fff}
+.theme-tog svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+.main{flex:1;margin-left:var(--side-w);min-width:0}
+.topbar{height:var(--top-h);position:sticky;top:0;z-index:40;background:var(--panel);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 26px;gap:14px}
+.crumb{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em}
+.crumb b{color:var(--navy)}
+html[data-theme="dark"] .crumb b{color:var(--gold)}
+.topbar .meta{margin-left:auto;display:flex;gap:10px;align-items:center}
+.tag{font-family:var(--mono);font-size:10.5px;color:var(--slate);padding:5px 10px;
+  border:1px solid var(--line);border-radius:7px;background:var(--field)}
+.tag b{color:var(--ink)}
+
+.view{display:none;padding:26px;animation:fade .32s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* ============ PRIMITIVES ============ */
+.phead{margin-bottom:22px}
+.phead .eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold-deep);
+  text-transform:uppercase;letter-spacing:.16em;margin-bottom:7px}
+html[data-theme="dark"] .phead .eyebrow{color:var(--gold)}
+.phead h1{font-size:25px;font-weight:700}
+.phead p{color:var(--slate);max-width:68ch;margin-top:7px;font-size:13.5px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);overflow:hidden}
+.card-h{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.card-h h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
+.card-h .hint{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.card-b{padding:20px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:17px 19px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--navy)}
+.kpi.gold::before{background:var(--gold)} .kpi.green::before{background:var(--green)}
+.kpi.red::before{background:var(--red)}
+.kpi .k{font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.12em}
+.kpi .v{font-family:var(--disp);font-size:25px;font-weight:700;color:var(--ink);margin-top:7px;
+  letter-spacing:-.02em}
+.kpi .d{font-size:11px;margin-top:5px;color:var(--slate)}
+.kpi .d.up{color:var(--green)} .kpi .d.down{color:var(--red)}
+
+.pill{display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em}
+.pill.navy{background:var(--blue-bg);color:var(--blue)}
+.pill.gold{background:var(--gold-bg);color:var(--gold-deep)}
+.pill.green{background:var(--green-bg);color:var(--green)}
+.pill.red{background:var(--red-bg);color:var(--red)}
+.pos{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:5px;
+  background:var(--field);color:var(--slate);margin-left:7px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.08em;text-align:right;padding:11px 16px;font-weight:600;cursor:pointer;
+  user-select:none;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--field)}
+thead th:first-child{text-align:left}
+thead th:hover{color:var(--ink)}
+thead th.sorted{color:var(--navy)}
+html[data-theme="dark"] thead th.sorted{color:var(--gold)}
+tbody td{padding:11px 16px;text-align:right;font-family:var(--mono);border-bottom:1px solid var(--line-soft)}
+tbody td:first-child{text-align:left;font-family:var(--body);font-weight:600;color:var(--ink)}
+thead th.tl,tbody td.tl{text-align:left}
+tbody td.tl{font-family:var(--body)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--field)}
+.val{font-weight:700} .val.good{color:var(--green)} .val.bad{color:var(--red)} .val.mid{color:var(--gold-deep)}
+html[data-theme="dark"] .val.mid{color:var(--gold)}
+.mini{width:54px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;display:inline-block;vertical-align:middle}
+.mini i{display:block;height:100%;border-radius:3px}
+.bar-cell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--slate)}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%}
+
+.grid-line{stroke:var(--line)} .axis-txt{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--tip-bg);color:var(--tip-fg);
+  border-radius:8px;padding:8px 11px;font-size:12px;opacity:0;transition:opacity .12s;z-index:80;
+  white-space:nowrap;box-shadow:var(--shadow-lg);font-family:var(--body)}
+.tip b{font-family:var(--mono)}
+
+.scaffold{display:grid;place-items:center;min-height:320px;text-align:center;color:var(--muted);
+  border:1px dashed var(--line);border-radius:var(--r);background:var(--panel)}
+.scaffold h4{font-family:var(--disp);color:var(--ink);margin-bottom:6px;font-size:15px}
+
+@media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){
+  .sidebar{transform:translateX(-100%);transition:transform .26s}
+  .sidebar.open{transform:none}
+  .main{margin-left:0}
+  .menu-btn{display:grid!important}
+}
+.menu-btn{display:none;place-items:center;width:36px;height:36px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel);cursor:pointer}
+.menu-btn svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:2}
+
+.chip{font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:7px;
+  border:1px solid var(--line);background:var(--field);color:var(--slate);cursor:pointer;
+  transition:.14s;user-select:none}
+.chip:hover{border-color:var(--navy);color:var(--ink)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700}
+.preset{text-align:left;padding:11px 13px;border-radius:9px;border:1px solid var(--line);
+  background:var(--field);color:var(--slate);font-family:var(--body);font-size:13px;cursor:pointer;transition:.14s}
+.preset:hover{color:var(--ink);border-color:var(--navy)}
+.preset.on{border-color:var(--gold);color:var(--gold-deep);background:var(--gold-bg)}
+html[data-theme="dark"] .preset.on{color:var(--gold)}
+#aiPrompt:focus{outline:none;border-color:var(--navy)}
+.ai-out h3{color:var(--navy);font-size:15px;margin:18px 0 8px}
+html[data-theme="dark"] .ai-out h3{color:var(--gold)}
+.ai-out h3:first-child{margin-top:0}
+.ai-out p{margin-bottom:11px;font-size:13.5px;line-height:1.65}
+.ai-out ul{margin:0 0 12px 18px}.ai-out li{margin-bottom:6px;font-size:13.5px}
+.ai-out strong{color:var(--ink)}
+.blink::after{content:"▋";color:var(--gold-deep);animation:bl 1s steps(2) infinite}
+@keyframes bl{50%{opacity:0}}
+
+/* range sliders */
+.attr-slider{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;
+  background:var(--line);outline:none;cursor:pointer}
+.attr-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:17px;height:17px;
+  border-radius:50%;background:var(--navy);border:2px solid var(--panel);box-shadow:var(--shadow);cursor:pointer}
+.attr-slider::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--navy);
+  border:2px solid var(--panel);cursor:pointer}
+html[data-theme="dark"] .attr-slider::-webkit-slider-thumb{background:var(--gold)}
+html[data-theme="dark"] .attr-slider::-moz-range-thumb{background:var(--gold)}
+
+.qlab{font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.qsel{width:100%;background:var(--field);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--body);font-size:13px;padding:8px 10px;cursor:pointer}
+.qsel:focus{outline:none;border-color:var(--navy)}
+.way-row{margin:9px 0}
+.way-row .wtop{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;color:var(--slate)}
+.way-row .wtop b{font-family:var(--mono);color:var(--navy)}
+html[data-theme="dark"] .way-row .wtop b{color:var(--gold)}
+.pillar-h{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.pillar-pct{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--navy)}
+html[data-theme="dark"] .pillar-pct{color:var(--gold)}
+.grade-star{cursor:pointer;font-size:18px;color:var(--line);transition:.1s}
+.grade-star.on{color:var(--gold)}
+.scrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;padding:5px 0;border-bottom:1px solid var(--line-soft);color:var(--slate)}
+.scrow b{color:var(--ink)}
+
+@media(max-width:1024px){.waygrid{grid-template-columns:1fr!important}.mockgrid{grid-template-columns:1fr!important}}
+
+/* big board drag */
+.bb-row{display:grid;grid-template-columns:34px 26px 1fr auto auto;gap:12px;align-items:center;
+  padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  margin-bottom:7px;cursor:grab;transition:box-shadow .15s,border-color .15s}
+.bb-row:hover{border-color:var(--navy)}
+.bb-row.dragging{opacity:.4;cursor:grabbing}
+.bb-row.over{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-bg)}
+.bb-rank{font-family:var(--disp);font-weight:800;font-size:16px;color:var(--navy);text-align:center}
+html[data-theme="dark"] .bb-rank{color:var(--gold)}
+.bb-grip{color:var(--muted);font-size:14px;text-align:center;letter-spacing:-2px}
+.bb-name{font-weight:600;color:var(--ink);font-size:13px}
+.bb-fit{font-family:var(--mono);font-size:11px;color:var(--slate)}
+.bb-delta{font-family:var(--mono);font-size:12px;font-weight:700;min-width:42px;text-align:right}
+.bb-delta.up{color:var(--green)}.bb-delta.down{color:var(--red)}.bb-delta.even{color:var(--muted)}
+.sim-row{transition:border-color .14s,background .14s}
+.sim-row:hover{border-color:var(--navy)!important}
+@media(max-width:1024px){.simgrid{grid-template-columns:1fr!important}}
+
+/* depth chart */
+.line-row{display:grid;grid-template-columns:42px repeat(3,1fr);gap:10px;align-items:stretch;margin-bottom:10px}
+.line-tag{display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:13px;
+  color:#fff;border-radius:9px;background:var(--navy)}
+.line-tag.l2{background:#2f6fb0}.line-tag.l3{background:var(--slate)}.line-tag.l4{background:#9aa8bd}
+.slot{background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+.slot .sn{font-weight:600;color:var(--ink);font-size:12.5px}
+.slot .sm{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between}
+.slot.prospect{border-style:dashed;border-color:var(--gold);background:var(--gold-bg)}
+.slot.prospect .sm b{color:var(--gold-deep)}
+.slot[draggable="true"]{cursor:grab}
+.slot.dragging{opacity:.4;cursor:grabbing}
+.slot.over{border-color:var(--navy)!important;box-shadow:0 0 0 2px var(--blue-bg)}
+.slot.slot-open{border-style:dashed;border-color:var(--line);background:transparent}
+.luyear.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700}
+
+@media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}
+  .vgrid,.treegrid,.labgrid,.aigrid,.dgrid{grid-template-columns:1fr!important}}
+@media(max-width:680px){.tradegrid{grid-template-columns:1fr!important}
+  .line-row{grid-template-columns:34px 1fr}}
+
+/* keep visuals readable: cap SVG height so cards don't dominate the screen */
+.card-b svg{max-height:340px;display:block;margin:0 auto}
+#scatter,#tree{max-height:380px}
+#radar,#treeRadar{max-height:300px}
+
+/* density: compact mode tightens everything */
+html[data-density="compact"] .view{padding:18px}
+html[data-density="compact"] .card-b{padding:14px}
+html[data-density="compact"] .kpi{padding:12px 14px}
+html[data-density="compact"] .kpi .v{font-size:21px}
+html[data-density="compact"] .kpi-row{gap:10px;margin-bottom:16px}
+html[data-density="compact"] .phead{margin-bottom:16px}
+html[data-density="compact"] .phead h1{font-size:21px}
+html[data-density="compact"] .card-b svg{max-height:270px}
+html[data-density="compact"] tbody td,html[data-density="compact"] thead th{padding:7px 12px}
+html[data-density="compact"] .card{border-radius:12px}
+
+/* info popover system */
+.info{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;
+  border:1px solid var(--muted);color:var(--muted);font-size:9px;font-weight:700;cursor:help;
+  margin-left:6px;vertical-align:middle;font-family:var(--body);transition:.14s;user-select:none}
+.info:hover{border-color:var(--navy);color:var(--navy);background:var(--blue-bg)}
+html[data-theme="dark"] .info:hover{border-color:var(--gold);color:var(--gold);background:transparent}
+#methodPop{display:none;position:fixed;z-index:90;width:300px;background:var(--panel);
+  border:1px solid var(--navy);border-radius:12px;box-shadow:var(--shadow-lg);padding:14px 16px}
+html[data-theme="dark"] #methodPop{border-color:var(--gold)}
+#methodPop .mp-t{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--ink);margin-bottom:8px}
+#methodPop .mp-f{font-family:var(--mono);font-size:11px;color:var(--navy);background:var(--field);
+  border-radius:7px;padding:8px 10px;margin-bottom:8px;line-height:1.5}
+html[data-theme="dark"] #methodPop .mp-f{color:var(--gold)}
+#methodPop .mp-d{font-size:12px;color:var(--slate);line-height:1.55}
+
+/* global search */
+.gsearch{position:relative;flex:1;max-width:300px}
+.gsearch input{width:100%;background:var(--field);border:1px solid var(--line);border-radius:9px;
+  color:var(--ink);font-family:var(--body);font-size:13px;padding:8px 12px 8px 32px}
+.gsearch input:focus{outline:none;border-color:var(--navy)}
+.gsearch svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;
+  stroke:var(--muted);fill:none;stroke-width:2;pointer-events:none}
+.gs-results{position:absolute;top:42px;left:0;right:0;background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;box-shadow:var(--shadow-lg);max-height:340px;overflow-y:auto;z-index:60;display:none}
+.gs-results.open{display:block}
+.gs-item{padding:10px 13px;cursor:pointer;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:9px}
+.gs-item:hover{background:var(--field)}
+.gs-item .gn{font-weight:600;color:var(--ink);font-size:13px}
+.gs-item .gm{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto}
+.gs-cat{font-family:var(--mono);font-size:9px;color:var(--gold-deep);text-transform:uppercase;letter-spacing:.1em;padding:8px 13px 4px;background:var(--field)}
+
+/* dashboard */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.dash-tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;
+  box-shadow:var(--shadow);cursor:pointer;transition:transform .14s,box-shadow .14s;position:relative;overflow:hidden}
+.dash-tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--navy)}
+.dash-tile .dt-ic{width:30px;height:30px;border-radius:8px;background:var(--blue-bg);display:grid;place-items:center;margin-bottom:12px}
+.dash-tile .dt-ic svg{width:17px;height:17px;stroke:var(--navy);fill:none;stroke-width:1.8}
+.dash-tile h3{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.dash-tile p{font-size:12px;color:var(--slate);line-height:1.5}
+.dash-tile .dt-stat{font-family:var(--disp);font-size:22px;font-weight:700;color:var(--navy);margin-top:10px}
+.alert-row{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line-soft)}
+.alert-row:last-child{border:none}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.alert-row .at{font-size:13px;color:var(--ink);font-weight:500}
+.alert-row .ad{font-size:11.5px;color:var(--slate)}
+.alert-row .ago{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
+@media(max-width:1024px){.dash-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.dash-grid{grid-template-columns:1fr}}
+
+@media print{
+  .sidebar,.topbar,#briefPrint,#briefSnap{display:none!important}
+  .main{margin-left:0!important}
+  .view{display:none!important}
+  #view-brief{display:block!important;padding:0!important}
+  #view-brief .phead{display:none!important}
+  #briefSheet{box-shadow:none!important;border:none!important}
+  body{background:#fff!important}
+}
+
+/* guided tour */
+#tourOverlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(11,18,32,.55);backdrop-filter:blur(2px)}
+#tourOverlay.on{display:block}
+#tourCard{position:fixed;z-index:201;width:360px;max-width:calc(100vw - 32px);background:var(--panel);
+  border:1px solid var(--gold);border-radius:16px;box-shadow:var(--shadow-lg);padding:22px;
+  left:50%;top:50%;transform:translate(-50%,-50%)}
+#tourCard .tc-step{font-family:var(--mono);font-size:10px;color:var(--gold-deep);text-transform:uppercase;letter-spacing:.14em;margin-bottom:9px}
+#tourCard h3{font-family:var(--disp);font-size:18px;font-weight:700;color:var(--ink);margin-bottom:9px}
+#tourCard p{font-size:13.5px;line-height:1.6;color:var(--ink-2);margin-bottom:18px}
+#tourCard .tc-nav{display:flex;align-items:center;gap:10px}
+#tourCard .tc-dots{display:flex;gap:5px;margin-right:auto}
+#tourCard .tc-dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+#tourCard .tc-dot.on{background:var(--gold)}
+#tourCard button{padding:9px 16px;border-radius:9px;font-family:var(--body);font-weight:600;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--slate)}
+#tourCard button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+#tourCard .tc-skip{position:absolute;top:16px;right:18px;border:none;background:none;color:var(--muted);font-size:12px;padding:0;width:auto}
+</style>
+</head>
+<body>
+<div class="shell">
+<div id="tourOverlay">
+  <div id="tourCard">
+    <button class="tc-skip" id="tourSkip">Skip ✕</button>
+    <div class="tc-step" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourBody"></p>
+    <div class="tc-nav">
+      <div class="tc-dots" id="tourDots"></div>
+      <button id="tourBack">Back</button>
+      <button class="primary" id="tourNext">Next</button>
+    </div>
+  </div>
+</div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">N</div>
+      <div><div class="bt">Smashville Ops</div><div class="bs">Analytics Suite</div></div>
+    </div>
+    <nav id="nav">
+      <div class="nav-label">Home</div>
+      <div class="nav-item active" data-v="dash"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Command Center<span class="n">00</span></div>
+      <div class="nav-label">Evaluate</div>
+      <div class="nav-item" data-v="cap"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Roster &amp; Cap<span class="n">01</span></div>
+      <div class="nav-item" data-v="value"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Player Value<span class="n">02</span></div>
+      <div class="nav-item" data-v="tree"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.4"/><circle cx="6" cy="19" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M12 7.4v4M12 11.4L6 16.6M12 11.4l6 5.2"/></svg>Scouting Tree<span class="n">03</span></div>
+      <div class="nav-item" data-v="lab"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"/><path d="M7 3h10"/></svg>Comparison Lab<span class="n">04</span></div>
+      <div class="nav-label">Build</div>
+      <div class="nav-item" data-v="draft"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v18M5 10l7-7 7 7"/></svg>Draft Value<span class="n">05</span></div>
+      <div class="nav-item" data-v="finance"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4.5"/></svg>Finance &amp; Forecast<span class="n">06</span></div>
+      <div class="nav-item" data-v="lineup"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg>Future Lineup<span class="n">07</span></div>
+      <div class="nav-item" data-v="mock"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16M4 5v14M4 19h16M8 9h8M8 13h6"/><circle cx="18" cy="16" r="3"/></svg>Mock Draft<span class="n">09</span></div>
+      <div class="nav-label">Decide</div>
+      <div class="nav-item" data-v="model"><svg class="ic" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16l3-5 3 3 5-7"/><circle cx="8" cy="16" r="1"/><circle cx="11" cy="11" r="1"/><circle cx="14" cy="14" r="1"/></svg>Model Lab<span class="n">10</span></div>
+      <div class="nav-item" data-v="ai"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>AI Architect<span class="n">08</span></div>
+      <div class="nav-item" data-v="brief"><svg class="ic" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM15 2v5h5M9 13h6M9 17h6"/></svg>The Brief<span class="n">★</span></div>
+    </nav>
+    <div class="side-foot">
+      <button class="theme-tog" id="themeTog">
+        <svg id="togIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+        <span id="togLabel">Dark mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <span class="crumb">Predators / <b id="crumb">Command Center</b></span>
+      <div class="gsearch">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="globalSearch" placeholder="Search any player…" autocomplete="off">
+        <div class="gs-results" id="gsResults"></div>
+      </div>
+      <div class="meta">
+        <button class="tag" id="demoBtn" style="cursor:pointer;display:flex;align-items:center;gap:6px;border-color:var(--gold);color:var(--gold-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>Take a tour</button>
+        <button class="tag" id="densityTog" style="cursor:pointer;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span id="densityLabel">Compact</span></button>
+        <span class="tag">Season <b>2026&ndash;27</b></span>
+        <span class="tag">GM <b>C. MacFarland</b></span>
+      </div>
+    </div>
+
+    <!-- VIEWS injected below in later build passes -->
+    <!-- ===== 00 DASHBOARD / COMMAND CENTER ===== -->
+    <section class="view active" id="view-dash">
+      <div class="phead"><div class="eyebrow">Command Center</div>
+        <h1>Smashville Hockey Ops</h1>
+        <p>Everything that needs attention, in one place. The current roster, the farm pipeline, draft prep, and the model that drives every decision. Click any tile to dive in, or search any player above.</p></div>
+
+      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi navy"><div class="k">Cap committed <span class="info" data-m="capPressure">ⓘ</span></div><div class="v">$58.8M</div><div class="d">of $103.5M ceiling</div></div>
+        <div class="kpi red"><div class="k">Anchor contracts <span class="info" data-m="surplus">ⓘ</span></div><div class="v">3</div><div class="d down">Stamkos · Skjei · Marchessault</div></div>
+        <div class="kpi gold"><div class="k">Pick at the draft</div><div class="v">#10</div><div class="d">+ 6 later selections</div></div>
+        <div class="kpi green"><div class="k">Top farm grade</div><div class="v">B+</div><div class="d up">Surin · Molendyk · Martin</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start" class="dgrid">
+        <div>
+          <div class="card-h" style="border:none;padding:0 0 12px"><h2 style="font-size:15px">Jump to a module</h2></div>
+          <div class="dash-grid" id="dashTiles"></div>
+        </div>
+        <div class="card"><div class="card-h"><h2>Key things to look into</h2></div>
+          <div id="dashAlerts"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px"><div class="card-h"><h2>Current roster snapshot</h2><span class="hint">2025-26 opening night · verified</span></div>
+        <div style="overflow-x:auto"><table id="dashRoster"><thead><tr>
+          <th>Player</th><th class="tl">Pos</th><th>Cap Hit</th><th>Value <span class="info" data-m="valueScore">ⓘ</span></th><th>Surplus <span class="info" data-m="surplus">ⓘ</span></th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card" style="margin-top:18px"><div class="card-h"><h2>Farm system</h2><span class="hint">top prospects · verified org pipeline</span></div>
+        <div style="overflow-x:auto"><table id="dashFarm"><thead><tr>
+          <th>Prospect</th><th class="tl">Pos</th><th class="tl">Drafted</th><th class="tl">Club</th><th>NHL ETA</th><th class="tl">Ceiling</th><th>Grade</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===== 01 ROSTER & CAP ===== -->
+    <section class="view" id="view-cap">
+      <div class="phead"><div class="eyebrow">Module 01 — Contract Efficiency</div>
+        <h1>Roster &amp; Cap</h1>
+        <p>Every dollar mapped to on-ice value. The surplus column flags contracts paying below market production (assets) and above it (anchors) — the diagnostic for the 2024 free-agency overspend.</p></div>
+      <div class="kpi-row">
+        <div class="kpi navy"><div class="k">Cap Committed</div><div class="v">$58.8M</div><div class="d">12 core · $103.5M ceiling</div></div>
+        <div class="kpi red"><div class="k">Net Surplus Value</div><div class="v">−$1.3M</div><div class="d down">Core pays above output</div></div>
+        <div class="kpi gold"><div class="k">Anchor Contracts</div><div class="v">3</div><div class="d">Stamkos · Skjei · Marchessault</div></div>
+        <div class="kpi green"><div class="k">Surplus Assets</div><div class="v">5</div><div class="d up">Young, beating their pay</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Contract Ledger</h2><span class="hint">click headers to sort · surplus = market value − cap hit</span></div>
+        <div style="overflow-x:auto"><table id="capTable"><thead><tr>
+          <th data-c="name" data-t="s">Player</th><th data-c="age" class="sorted">Age</th>
+          <th data-c="hit">Cap Hit</th><th data-c="yrs">Term</th>
+          <th data-c="prod">Value Score</th><th data-c="surplus">Surplus</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--green)"></span>Surplus asset</span>
+        <span><span class="dot" style="background:var(--gold)"></span>Fair value</span>
+        <span><span class="dot" style="background:var(--red)"></span>Underwater — buyout/trade candidate</span>
+      </div>
+    </section>
+
+    <!-- ===== 02 PLAYER VALUE ===== -->
+    <section class="view" id="view-value">
+      <div class="phead"><div class="eyebrow">Module 02 — Undervaluation Model</div>
+        <h1>Player Value</h1>
+        <p>Composite Value Score vs. cap hit. Points above the fair-value line produce more than they cost — the buy-low pool. Weighting rewards cheap producers, not raw point totals.</p></div>
+      <div style="display:grid;grid-template-columns:1fr 322px;gap:18px;align-items:start" class="vgrid">
+        <div class="card">
+          <div class="card-h"><h2>Value vs. Cost</h2><span class="hint">hover a point · dashed = fair value</span></div>
+          <div class="card-b" style="padding-bottom:6px"><svg id="scatter" viewBox="0 0 640 380" style="width:100%;height:auto"></svg></div>
+          <div class="legend" style="padding:0 20px 18px;margin-top:0">
+            <span><span class="dot" style="background:var(--green)"></span>Surplus</span>
+            <span><span class="dot" style="background:var(--gold)"></span>Fair</span>
+            <span><span class="dot" style="background:var(--red)"></span>Overpaid</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div class="card"><div class="card-h"><h2>Model Weights</h2></div><div class="card-b" id="weights" style="padding-top:6px"></div></div>
+          <div class="card"><div class="card-h"><h2>Buy-Low Board</h2><span class="hint">surplus / $</span></div><div id="buylow"></div></div>
+        </div>
+      </div>
+    </section>
+    <!-- ===== 03 SCOUTING TREE (WORKBENCH) ===== -->
+    <section class="view" id="view-tree">
+      <div class="phead"><div class="eyebrow">Module 03 — Live Evaluation Workbench</div>
+        <h1>Scouting Tree</h1>
+        <p>Pick a target or build your own. Drag the attribute sliders and everything recomputes live — outcome tiers, projected line, risk, comps, and the what-if cap impact. Toggle Draft / UFA / Trade to reframe the acquisition.</p></div>
+
+      <!-- target bar -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center" id="targetPick"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <button class="chip" id="addTarget" style="border-color:var(--navy);color:var(--navy)">+ New target</button>
+        <div style="display:flex;gap:6px;margin-left:auto" id="typeToggle">
+          <button class="chip on" data-ty="prospect">Draft</button>
+          <button class="chip" data-ty="fa">UFA</button>
+          <button class="chip" data-ty="trade">Trade</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start" class="treegrid">
+        <!-- LEFT: editor -->
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div class="card"><div class="card-h"><h2>Attributes</h2><span class="hint">drag to model</span></div>
+            <div class="card-b" id="sliders" style="padding-top:8px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h2>Confidence / Risk</h2></div>
+            <div class="card-b" id="riskMeter"></div>
+          </div>
+          <div class="card"><div class="card-h"><h2>Compare vs. Pred</h2></div>
+            <div class="card-b" style="padding-top:12px">
+              <select id="overlaySel" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-family:var(--body);font-size:13px;padding:9px 11px"></select>
+              <div id="overlayNote" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:9px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: outputs -->
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px" class="treegrid">
+            <div class="card">
+              <div class="card-h"><h2>Outcome Tree</h2><span class="hint" id="treeName">—</span></div>
+              <div class="card-b"><svg id="tree" viewBox="0 0 560 420" style="width:100%;height:auto"></svg></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <div class="card"><div class="card-h"><h2>Profile + Overlay</h2><span class="hint">percentile radar</span></div>
+                <div class="card-b"><svg id="treeRadar" viewBox="0 0 360 300" style="width:100%;height:auto"></svg></div></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="treegrid">
+            <div class="card"><div class="card-h"><h2>Projected Line</h2><span class="hint">3-yr peak · 80% band</span></div>
+              <div class="card-b" id="projLine"></div></div>
+            <div class="card"><div class="card-h"><h2>What-If: Cap Impact</h2><span class="hint">click a tier</span></div>
+              <div class="card-b" id="whatif"></div></div>
+          </div>
+          <div class="card"><div class="card-h"><h2>Closest Comps</h2><span class="hint">recomputed from attributes · Pred / league / historical</span></div>
+            <div id="comps"></div></div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.6;padding:2px 4px">
+            <b style="color:var(--slate)">Methodology:</b> the projection is a transparent, defensible heuristic — a weighted attribute blend, not a trained ML model. For deployment the weights would be fit on historical draft outcomes; the architecture is built to swap that model in without touching the interface.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 04 COMPARISON LAB ===== -->
+    <section class="view" id="view-lab">
+      <div class="phead"><div class="eyebrow">Module 04 — Distribution &amp; Comparison</div>
+        <h1>Comparison Lab</h1>
+        <p>The dense view. Box plots across cohorts, a radar of two-way profile, league distribution curves with the target marked, and a percentile scatter. Built to interrogate a player from every angle at once.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px" id="labPick"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="labgrid">
+        <div class="card"><div class="card-h"><h2>Metric Box Plots</h2><span class="hint">target vs. cohorts</span></div>
+          <div class="card-b"><svg id="boxplot" viewBox="0 0 560 340" style="width:100%;height:auto"></svg></div></div>
+        <div class="card"><div class="card-h"><h2>Two-Way Profile</h2><span class="hint">percentile radar</span></div>
+          <div class="card-b"><svg id="radar" viewBox="0 0 420 340" style="width:100%;height:auto"></svg></div></div>
+        <div class="card"><div class="card-h"><h2>League Distribution</h2><span class="hint">value score · target marked</span></div>
+          <div class="card-b"><svg id="kde" viewBox="0 0 560 300" style="width:100%;height:auto"></svg></div></div>
+        <div class="card"><div class="card-h"><h2>Percentile Scatter</h2><span class="hint">offense × defense</span></div>
+          <div class="card-b"><svg id="pscatter" viewBox="0 0 560 300" style="width:100%;height:auto"></svg></div></div>
+      </div>
+    </section>
+    <!-- ===== 05 DRAFT VALUE ===== -->
+    <section class="view" id="view-draft">
+      <div class="phead"><div class="eyebrow">Module 05 — Pick Value Curve</div>
+        <h1>Draft Value</h1>
+        <p>Expected-value curve by draft slot, anchored on Nashville's #10 overall. The trade calculator tests whether a package clears the value threshold — discipline that turns a draft-first philosophy into defensible deals.</p></div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-h"><h2>Pick Value Curve</h2><span class="hint">#10 highlighted</span></div>
+        <div class="card-b"><svg id="curve" viewBox="0 0 660 300" style="width:100%;height:auto"></svg></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Trade Equivalence Calculator</h2><span class="hint">clears within ±10%</span></div>
+        <div style="display:grid;grid-template-columns:1fr 130px 1fr" class="tradegrid">
+          <div style="padding:18px 20px;border-right:1px solid var(--line)">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Nashville sends</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;min-height:78px" id="poolA"></div>
+            <div style="margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--muted)">Total <b style="color:var(--ink);font-size:15px;margin-left:6px" id="totalA">0</b></div>
+          </div>
+          <div style="display:grid;place-items:center;text-align:center;border-left:1px solid var(--line);border-right:1px solid var(--line)">
+            <div><div id="verdict" style="font-family:var(--mono);font-weight:700;font-size:15px;color:var(--muted)">add picks</div>
+            <div id="verdictSub" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px">to evaluate</div></div>
+          </div>
+          <div style="padding:18px 20px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Nashville receives</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;min-height:78px" id="poolB"></div>
+            <div style="margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--muted)">Total <b style="color:var(--ink);font-size:15px;margin-left:6px" id="totalB">0</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 06 FINANCE & FORECAST ===== -->
+    <section class="view" id="view-finance">
+      <div class="phead"><div class="eyebrow">Module 06 — Cap Forecast &amp; Valuation</div>
+        <h1>Finance &amp; Forecast</h1>
+        <p>Forward cap commitments against the rising ceiling, and a contract-value verdict — what each anchor is actually worth versus what it's paid.</p></div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-h"><h2>Cap Commitment vs. Ceiling</h2><span class="hint">2026-27 → 2029-30</span></div>
+        <div class="card-b"><svg id="capForecast" viewBox="0 0 660 320" style="width:100%;height:auto"></svg></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Contract Value Verdict</h2><span class="hint">paid vs. modeled worth</span></div>
+        <div style="overflow-x:auto"><table id="verdictTable"><thead><tr>
+          <th>Player</th><th>Cap Hit</th><th>Modeled Worth</th><th class="tl">Verdict</th><th class="tl">Action</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===== 07 FUTURE LINEUP ===== -->
+    <section class="view" id="view-lineup">
+      <div class="phead"><div class="eyebrow">Module 07 — Projected Depth Chart</div>
+        <h1>Future Lineup</h1>
+        <p>Forecast the roster across the next five seasons. Drag any player between slots to test combinations — lines, pairings, goalies. Prospects from the real farm system and your drafted class slot in as they become NHL-ready. The assembled product of every other module.</p></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px" id="yearTabs"></div>
+
+      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi navy"><div class="k">Projected cap <span class="info" data-m="capPressure">ⓘ</span></div><div class="v" id="luCap">—</div><div class="d" id="luCeil"></div></div>
+        <div class="kpi gold"><div class="k">Prospects in lineup</div><div class="v" id="luPros">—</div><div class="d">on entry-level deals</div></div>
+        <div class="kpi green"><div class="k">Avg age</div><div class="v" id="luAge">—</div><div class="d" id="luAgeD"></div></div>
+        <div class="kpi red"><div class="k">Open slots</div><div class="v" id="luOpen">—</div><div class="d">to fill via FA/trade</div></div>
+      </div>
+
+      <div class="card"><div class="card-h"><h2>Forwards</h2><span class="hint">drag to rearrange · L1 → L4</span></div><div class="card-b" id="fwdLines"></div></div>
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-top:18px" class="dgrid">
+        <div class="card"><div class="card-h"><h2>Defense Pairings</h2><span class="hint">drag to rearrange</span></div><div class="card-b" id="dPairs"></div></div>
+        <div class="card"><div class="card-h"><h2>Goaltending</h2></div><div class="card-b" id="goalies"></div></div>
+      </div>
+      <div class="card" style="margin-top:18px"><div class="card-h"><h2>Available pool</h2><span class="hint">farm + drafted · drag into the lineup above</span></div>
+        <div class="card-b" id="poolBench"></div>
+      </div>
+    </section>
+
+    <!-- ===== 09 MOCK DRAFT ===== -->
+    <section class="view" id="view-mock">
+      <div class="phead"><div class="eyebrow">Module 09 — Mock Entry Draft &amp; Fit Engine</div>
+        <h1>Mock Draft</h1>
+        <p>Real 2026 NHL Draft prospects. Each carries an <b>Available%</b> (still on the board at #10) and a <b>Fit%</b> — the Smashville Way. Define what the Way means with the weights below and the board re-sorts to your identity. Filter the pool, grade players, deep-dive any name, then run the full 7-round draft in practice mode.</p></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:18px">Top ~94 are real consensus prospects (names, positions, leagues per public rankings); rounds 4–7 are projected late-round fillers, tagged <b>proj</b>. All attributes are modeled — no public granular tracking data exists for draft-eligible players.</div>
+
+      <!-- SMASHVILLE WAY DEFINER -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-h"><h2>Define the Smashville Way</h2><span class="hint" id="wayHint">weights normalize to 100%</span></div>
+        <div class="card-b">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px" class="waygrid" id="wayPillars"></div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Presets</span>
+            <button class="chip waypreset" data-w="balanced">Balanced</button>
+            <button class="chip waypreset" data-w="identity">Heavy-forecheck identity</button>
+            <button class="chip waypreset" data-w="value">Value / cap-efficiency</button>
+            <button class="chip waypreset" data-w="need">Positional need</button>
+            <label style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate);cursor:pointer">
+              <input type="checkbox" id="useGrade" checked> scout grade feeds Fit%</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MONTE CARLO + DISAGREEMENT -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" class="labgrid">
+        <div class="card"><div class="card-h"><h2>Who's available at #10?</h2><span class="hint">Monte Carlo · 1,000 sims</span>
+          <button id="mcRun" class="chip" style="margin-left:10px;border-color:var(--navy);color:var(--navy)">Run 1,000 drafts</button></div>
+          <div class="card-b"><div id="mcResult" style="min-height:230px"></div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px">Simulating the 9 picks ahead of us 1,000 times (with realistic team-need noise) gives the probability each player is still on the board when Nashville picks. This is how a real front office plans contingencies.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Model vs. consensus</h2><span class="hint">our edge: biggest disagreements</span></div>
+          <div class="card-b"><div id="disagree"></div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px">Where our model's ranking most diverges from public consensus. Green = we're higher (targets others undervalue); red = we're lower (fade the hype). These gaps are where drafts are won.</div></div></div>
+      </div>
+
+      <!-- PICK SUGGESTION -->
+      <div class="kpi-row" style="grid-template-columns:2fr 1fr 1fr">
+        <div class="kpi gold" id="recoCard"><div class="k">Recommended at #10</div><div class="v" id="recoName">—</div><div class="d" id="recoWhy"></div></div>
+        <div class="kpi navy"><div class="k">Board depth at 10</div><div class="v" id="depthV">—</div><div class="d">fits ≥ 70% still available</div></div>
+        <div class="kpi green"><div class="k">Best value</div><div class="v" id="valueV">—</div><div class="d" id="valueD">steal vs consensus</div></div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-h"><h2>Filter Prospects</h2><span class="hint" id="qCount"></span></div>
+        <div class="card-b">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+            <div><div class="qlab">Position</div><select id="qPos" class="qsel"><option value="">Any</option><option>C</option><option>LW</option><option>RW</option><option>D</option><option>G</option></select></div>
+            <div><div class="qlab">Handed</div><select id="qHand" class="qsel"><option value="">Any</option><option>L</option><option>R</option></select></div>
+            <div><div class="qlab">League</div><select id="qLeague" class="qsel"><option value="">Any</option></select></div>
+            <div><div class="qlab">Min height (in)</div><select id="qHt" class="qsel"><option value="0">Any</option><option>70</option><option>72</option><option>74</option><option>76</option></select></div>
+            <div><div class="qlab">Min Fit%</div><select id="qFit" class="qsel"><option value="0">Any</option><option>60</option><option>70</option><option>80</option></select></div>
+            <div><div class="qlab">Min Transition</div><select id="qTrans" class="qsel"><option value="0">Any</option><option>65</option><option>75</option><option>85</option></select></div>
+            <div><div class="qlab">Min Compete</div><select id="qComp" class="qsel"><option value="0">Any</option><option>70</option><option>80</option><option>85</option></select></div>
+            <div><div class="qlab">Round</div><select id="qRound" class="qsel"><option value="0">Any</option><option value="1">1st (1-32)</option><option value="2">2nd (33-64)</option><option value="3">3rd (65-96)</option></select></div>
+            <div><div class="qlab">Sort by</div><select id="qSort" class="qsel"><option value="rank">Consensus rank</option><option value="fit">Fit% desc</option><option value="avail">Available% desc</option><option value="value">Value (steal)</option></select></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:18px;margin-top:14px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate);cursor:pointer"><input type="checkbox" id="qAvail"> only likely available at our pick</label>
+            <input id="qSearch" placeholder="Search name…" style="flex:1;min-width:160px;background:var(--field);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--body);font-size:13px;padding:8px 11px">
+            <button id="qClear" class="chip">Clear filters</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOARD + DETAIL -->
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start" class="mockgrid">
+        <div class="card">
+          <div class="card-h"><h2>Draft Board</h2><span class="hint" id="boardHint"></span>
+            <button id="boardSnap" title="Export board as image" style="margin-left:8px;display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--slate);font-family:var(--body);font-size:11px;font-weight:600;cursor:pointer">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 5V3h8v2M9 14l3-3 3 3"/></svg> Export</button></div>
+          <div style="overflow-x:auto"><table id="boardTable"><thead><tr>
+            <th data-c="rank" data-t="n" class="sorted">Rk</th><th data-c="name" data-t="s" class="tl">Prospect</th>
+            <th data-c="avail">Avail%</th><th data-c="fit">Fit%</th><th data-c="grade">Grade</th><th data-c="flag" data-t="s">Value</th>
+          </tr></thead><tbody></tbody></table></div>
+        </div>
+        <!-- SCOUT CARD -->
+        <div class="card">
+          <div class="card-h"><h2>Scout Card</h2><span class="hint" id="scName">—</span></div>
+          <div class="card-b" id="scoutCard"></div>
+        </div>
+      </div>
+
+      <!-- BIG BOARD (drag to rank) -->
+      <div class="card" style="margin-top:18px">
+        <div class="card-h"><h2>Our Big Board</h2><span class="hint">drag to set your ranking · Δ vs consensus</span>
+          <button id="bbReset" class="chip" style="margin-left:12px">Reset to consensus</button></div>
+        <div class="card-b">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px">Top 16 of your board — drag rows to reorder. Green Δ = you're higher than consensus; red = lower.</div>
+          <div id="bigBoard"></div>
+        </div>
+      </div>
+
+      <!-- DRAFT SIMULATOR -->
+      <div class="phead" style="margin-top:30px"><div class="eyebrow">Practice Mode</div><h1 style="font-size:20px">Run the Draft</h1>
+        <p>You control Nashville. The other 31 teams auto-pick the best player available off the consensus board (with a little realism noise). Make your pick when you're on the clock, then keep going through all 7 rounds.</p></div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start" class="simgrid">
+        <div class="card">
+          <div class="card-h"><h2>On the Clock</h2><span class="hint" id="simStatus"></span>
+            <button id="simReset" class="chip" style="margin-left:12px">Reset draft</button></div>
+          <div class="card-b">
+            <div id="simClock" style="margin-bottom:16px"></div>
+            <div id="simAvail"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Draft Log</h2><span class="hint" id="simRound"></span></div>
+          <div class="card-b" id="simLog" style="max-height:560px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 10 MODEL LAB ===== -->
+    <section class="view" id="view-model">
+      <div class="phead"><div class="eyebrow">Module 10 — The Projection Model</div>
+        <h1>Model Lab</h1>
+        <p>The engine behind every projection in this suite, made transparent. It blends weighted signals into an expected outcome <i>and</i> a confidence band — because we can't be certain, but with more and better data we can be more confident. Pick a player to see exactly why the model believes what it believes.</p></div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px" id="modelPick"></div>
+
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi navy"><div class="k">Projected peak pts <span class="info" data-m="projPts">ⓘ</span></div><div class="v" id="mPts">—</div><div class="d" id="mBand"></div></div>
+        <div class="kpi gold"><div class="k">Model confidence <span class="info" data-m="confidence">ⓘ</span></div><div class="v" id="mConf">—</div><div class="d" id="mConfWhy"></div></div>
+        <div class="kpi green"><div class="k">Sample strength <span class="info" data-m="confidence">ⓘ</span></div><div class="v" id="mSample">—</div><div class="d">data behind this read</div></div>
+        <div class="kpi red"><div class="k">Bust risk <span class="info" data-m="bust">ⓘ</span></div><div class="v" id="mBust">—</div><div class="d">downside probability</div></div>
+        <div class="kpi gold"><div class="k">Identity-fit certainty <span class="info" data-m="fitCert">ⓘ</span></div><div class="v" id="mFitCert">—</div><div class="d" id="mFitWhy">from Smashville Way</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="labgrid">
+        <div class="card"><div class="card-h"><h2>Why this projection</h2><span class="hint">feature contribution</span></div>
+          <div class="card-b"><svg id="waterfall" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">Each bar is a signal pushing the projection above or below the baseline. Green lifts, red drags.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Outcome distribution</h2><span class="hint">not one number — a range</span></div>
+          <div class="card-b"><svg id="outcomeDist" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">The model's full belief: shaded 80% band, dashed median. Wider = less certain.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Bayesian update</h2><span class="hint">prior → posterior on new info</span>
+          <button id="bayesBtn" class="chip" style="margin-left:10px">+ Add a viewing (A grade)</button></div>
+          <div class="card-b"><svg id="bayes" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">A new scouting viewing updates the model's belief. The prior (gray) shifts to a posterior (gold) — tighter and re-centered. This is the model learning from evidence.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Development curve</h2><span class="hint">age progression, uncertainty cone</span></div>
+          <div class="card-b"><svg id="devCurve" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">Projected production by NHL season. The cone widens with time — we know less about year 7 than year 1.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Sensitivity</h2><span class="hint">what moves the projection most</span></div>
+          <div class="card-b"><svg id="sensitivity" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">If each attribute were 10 points higher, how much would the projection move? Tells scouts where another viewing matters most.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Calibration</h2><span class="hint">predicted vs. actual hit rate</span></div>
+          <div class="card-b"><svg id="calibration" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">On historical draft classes, when the model said "60% to be an NHLer," how often was it right? On the diagonal = well-calibrated.</div></div></div>
+
+        <div class="card"><div class="card-h"><h2>Learning from data</h2><span class="hint">confidence vs. sample size</span></div>
+          <div class="card-b"><svg id="learning" viewBox="0 0 520 300" style="width:100%;height:auto"></svg>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:6px">More viewings, more comparable history, stronger leagues → the band narrows. The model gets more confident as the evidence grows.</div></div></div>
+      </div>
+
+      <div class="card" style="margin-top:18px"><div class="card-h"><h2>How the model works</h2></div>
+        <div class="card-b" style="font-size:13.5px;line-height:1.7;color:var(--ink-2)">
+          <p style="margin-bottom:10px">The projection is a <b>weighted signal blend with an explicit uncertainty estimate</b> — deliberately transparent rather than a black box, so a scout or GM can see and challenge every input. Three things drive each output:</p>
+          <p style="margin-bottom:8px"><b style="color:var(--navy)">1. Expected value</b> — a weighted combination of attribute signals (offense, transition, shot, hockey IQ) calibrated to historical production at each position.</p>
+          <p style="margin-bottom:8px"><b style="color:var(--navy)">2. Confidence</b> — derived from sample strength: how many viewings, how strong the league faced, age relative to cohort, and how tight the comparable set is. Thin or noisy evidence widens the band.</p>
+          <p style="margin-bottom:8px"><b style="color:var(--navy)">3. Calibration</b> — back-tested against prior draft classes so the stated probabilities mean what they say. A "70%" should hit ~70% of the time.</p>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">Production note: this build uses a transparent heuristic with synthetic calibration data to demonstrate the architecture. In deployment the weights and calibration curve are fit on real historical draft outcomes and refit as each new class resolves — the interface and decision surface stay identical.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px"><div class="card-h"><h2>Methodology appendix</h2><span class="hint">every metric in the suite, defined</span></div>
+        <div class="card-b" id="methodAppendix"></div>
+      </div>
+    </section>
+
+    <!-- ===== 08 AI ARCHITECT ===== -->
+    <section class="view" id="view-ai">
+      <div class="phead"><div class="eyebrow">Module 08 — Live Claude API</div>
+        <h1>AI Architect</h1>
+        <p>Sends the live cap ledger and value model to Claude and returns roster moves filtered through MacFarland's draft-first mandate. Pick a directive or write your own.</p></div>
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start" class="aigrid">
+        <div class="card"><div class="card-b">
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px" id="aiPresets">
+            <button class="preset on" data-p="offload">Offload an anchor contract</button>
+            <button class="preset" data-p="draft">Maximize draft capital</button>
+            <button class="preset" data-p="window">Re-open the contention window</button>
+          </div>
+          <textarea id="aiPrompt" rows="3" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-family:var(--body);font-size:13px;padding:11px;resize:vertical;line-height:1.5">Identify the single contract most worth moving this offseason and what we should target in return, given our draft-first direction and the #10 pick.</textarea>
+          <button id="aiRun" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:9px;border:none;background:var(--navy);color:#fff;font-family:var(--body);font-weight:700;font-size:13px;cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>Run analysis</button>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:11px;text-align:center">Live call · roster &amp; value data passed as context</div>
+        </div></div>
+        <div class="card"><div class="card-b" id="aiOut" style="min-height:340px">
+          <div style="height:300px;display:grid;place-items:center;text-align:center;color:var(--muted)">
+            <div><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+            <p style="font-size:13px;line-height:1.7">Pick a directive and run analysis.<br>Claude reasons over the live cap and value model.</p></div>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ===== THE BRIEF (leave-behind) ===== -->
+    <section class="view" id="view-brief">
+      <div class="phead" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div><div class="eyebrow">Leave-behind · one page</div><h1>The Brief</h1>
+          <p>A single-page summary to leave with the front office. Print to PDF or export as an image.</p></div>
+        <div style="display:flex;gap:8px">
+          <button id="briefPrint" class="chip" style="border-color:var(--navy);color:var(--navy)">Print / PDF</button>
+          <button id="briefSnap" class="chip" style="border-color:var(--navy);color:var(--navy)">Export image</button>
+        </div>
+      </div>
+
+      <div class="card" id="briefSheet"><div class="card-b" style="padding:34px;max-width:820px;margin:0 auto">
+        <div style="display:flex;align-items:center;gap:13px;border-bottom:2px solid var(--navy);padding-bottom:16px;margin-bottom:20px">
+          <div class="logo" style="width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:grid;place-items:center;color:var(--navy-deep);font-family:var(--disp);font-weight:800;font-size:20px">N</div>
+          <div><div style="font-family:var(--disp);font-weight:800;font-size:19px;color:var(--ink)">Smashville Hockey Ops — Analytics Proposal</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Prepared for Chris MacFarland, President of Hockey Operations / GM · 2026-27</div></div>
+        </div>
+
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink-2)">
+          <p style="margin-bottom:16px"><b style="color:var(--ink)">The opportunity.</b> Nashville sits at #10 in a draft you've called the path to a franchise player, carrying three free-agent contracts that are paying above production. The job is to draft well, find undervalued talent, and spend the cap efficiently — and to do all three with conviction you can defend. This suite is built to do exactly that.</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0">
+            <div style="background:var(--field);border-radius:11px;padding:15px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--gold-deep);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">What it does</div>
+              <div style="font-size:12.5px;line-height:1.6">Ten linked modules: roster &amp; cap efficiency, an undervaluation model, a live scouting workbench, the real 2026 draft board with a fit engine and full 7-round sim, a five-year depth-chart forecaster, and a transparent projection model with confidence at its core.</div></div>
+            <div style="background:var(--field);border-radius:11px;padding:15px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--gold-deep);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">Why it fits your plan</div>
+              <div style="font-size:12.5px;line-height:1.6">Draft-first by design. You define the "Smashville Way" and the board re-sorts to your identity. Every projection carries an explicit confidence band — we can't be certain, but we quantify how confident we are, and the model sharpens as data accrues.</div></div>
+          </div>
+
+          <p style="margin-bottom:8px"><b style="color:var(--ink)">What separates it.</b></p>
+          <ul style="margin:0 0 16px 18px;font-size:12.5px;line-height:1.7">
+            <li><b>Transparent, not a black box</b> — every number opens its own formula. No "trust me."</li>
+            <li><b>Probabilistic</b> — Monte Carlo draft availability (1,000 sims), Bayesian updating as scouts file viewings, calibration back-testing.</li>
+            <li><b>Identity-driven</b> — the model's uncertainty reflects how well a player matches the team you want to build.</li>
+            <li><b>One connected loop</b> — define identity → evaluate → draft → forecast the roster five years out.</li>
+          </ul>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0;text-align:center">
+            <div><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--navy)">10</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">MODULES</div></div>
+            <div><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--navy)">224</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">PROSPECTS</div></div>
+            <div><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--navy)">1,000</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">MC SIMS</div></div>
+            <div><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--navy)">5-yr</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">FORECAST</div></div>
+          </div>
+
+          <p style="margin-bottom:6px"><b style="color:var(--ink)">The ask.</b> A short pilot: let me run the 2026 board and your cap picture through this with your scouting staff, and measure the model against your internal rankings as the class resolves. The architecture is production-ready — point it at the real scouting database and the interface doesn't change.</p>
+          <p style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line)">Note: this demo uses real roster, cap, farm, and 2026-draft names with modeled advanced metrics and synthetic calibration data to show the architecture. In deployment, weights and calibration are fit on real historical outcomes.</p>
+        </div>
+      </div></div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ===== SHARED DATA: real names, verified cap hits, mock advanced stats ===== */
+const roster=[
+  {name:"Filip Forsberg",pos:"LW",age:32,hit:8.5,yrs:4,prod:86,surplus:1.1},
+  {name:"Roman Josi",pos:"D",age:36,hit:9.06,yrs:2,prod:88,surplus:0.6},
+  {name:"Juuse Saros",pos:"G",age:31,hit:7.74,yrs:7,prod:80,surplus:-0.6},
+  {name:"Steven Stamkos",pos:"C",age:36,hit:8.0,yrs:2,prod:60,surplus:-3.7},
+  {name:"Jonathan Marchessault",pos:"RW",age:35,hit:5.5,yrs:3,prod:63,surplus:-2.0},
+  {name:"Brady Skjei",pos:"D",age:32,hit:7.0,yrs:5,prod:70,surplus:-2.4},
+  {name:"Ryan O'Reilly",pos:"C",age:35,hit:4.5,yrs:1,prod:73,surplus:0.5},
+  {name:"Gustav Nyquist",pos:"RW",age:37,hit:3.19,yrs:1,prod:64,surplus:0.2},
+  {name:"Luke Evangelista",pos:"RW",age:24,hit:2.1,yrs:2,prod:79,surplus:3.2},
+  {name:"Spencer Stastney",pos:"D",age:26,hit:1.4,yrs:2,prod:68,surplus:1.9},
+  {name:"Fedor Svechkov",pos:"C",age:22,hit:0.93,yrs:1,prod:62,surplus:2.3},
+  {name:"Zachary L'Heureux",pos:"LW",age:23,hit:0.86,yrs:1,prod:58,surplus:1.6}
+];
+const CEILING=103.5;
+
+/* ===== VERIFIED FARM SYSTEM (top prospects, real per public org rankings Dec 2025) ===== */
+const FARM=[
+  {name:"Yegor Surin",pos:"C",age:19,drafted:"2024 1st (#22)",club:"Lokomotiv (KHL)",eta:"2027-28",ceiling:"Top-6 power C",grade:"B+"},
+  {name:"Tanner Molendyk",pos:"D",age:21,drafted:"2023 1st (#24)",club:"Milwaukee (AHL)",eta:"2026-27",ceiling:"Top-4 two-way D",grade:"B+"},
+  {name:"Ryker Lee",pos:"RW",age:19,drafted:"2025 1st",club:"Michigan St. (NCAA)",eta:"2028-29",ceiling:"Top-6 scoring W",grade:"B"},
+  {name:"Joakim Kemell",pos:"RW",age:21,drafted:"2022 1st (#17)",club:"Milwaukee (AHL)",eta:"2026-27",ceiling:"Top-6 sniper",grade:"B"},
+  {name:"Brady Martin",pos:"C",age:18,drafted:"2025 1st (#5)",club:"S.S. Marie (OHL)",eta:"2028-29",ceiling:"Power 2-way C",grade:"B+"},
+  {name:"Teddy Stiga",pos:"LW",age:20,drafted:"2024 2nd (#55)",club:"Boston College (NCAA)",eta:"2027-28",ceiling:"Middle-6 scorer",grade:"B−"},
+  {name:"David Edstrom",pos:"C",age:20,drafted:"2023 1st (#32)",club:"Milwaukee (AHL)",eta:"2026-27",ceiling:"Bottom-6 2-way C",grade:"B−"},
+  {name:"Cameron Reid",pos:"D",age:18,drafted:"2025 1st (#21)",club:"Kitchener (OHL)",eta:"2028-29",ceiling:"2nd-pair 2-way D",grade:"B"}
+];
+
+/* ===== METHODOLOGY REGISTRY — every KPI/chart can open its exact formula ===== */
+const METHOD={
+  surplus:{t:"Surplus Value",f:"surplus = modeled market value − cap hit",d:"Market value derives the player's Value Score into a $ equivalent at the current cap ceiling, then subtracts the actual AAV. Positive = the contract pays below production (an asset); negative = above (an anchor)."},
+  valueScore:{t:"Value Score",f:"weighted blend of EV impact (34%), age curve (24%), usage-adj scoring (22%), defensive value (12%), durability (8%)",d:"A 0–100 composite calibrated so league-average regular = ~60. Weights are visible and editable in Module 02. In production these are fit on historical WAR-type outcomes."},
+  capPressure:{t:"Cap Pressure",f:"committed cap ÷ ceiling ($103.5M for 2026-27)",d:"Share of the cap already committed to core contracts. Rising ceiling each season eases this."},
+  fitPct:{t:"Smashville Fit %",f:"weighted(identity, value, need) — weights set by the GM in Module 09",d:"Identity = forecheck/pace/compete match; Value = transition/offense/shot; Need = positional scarcity. Scout grade (1–5★) optionally nudges the score ±. Re-sorts live as the Way is redefined."},
+  availPct:{t:"Available %",f:"logistic( consensus_rank − pick_slot )",d:"Probability the player is still on the board at our pick, from consensus rank distance. The Monte Carlo panel refines this with 1,000 team-need-aware simulations."},
+  projPts:{t:"Projected Points",f:"baseline 44 + Σ(attribute − 60) × weight",d:"Expected peak-season points. Offense ×0.55, Transition ×0.32, Shot ×0.28, IQ ×0.30, Defense ×0.12. Shown with an 80% confidence band, never as a lone number."},
+  confidence:{t:"Model Confidence",f:"f(league quality, consensus rank, scout grade)",d:"Sample strength: stronger leagues, more eyes (higher consensus rank), and scout conviction raise it. Low confidence widens the projection band."},
+  bust:{t:"Bust Risk",f:"f(1 − sample strength, defensive floor, offensive ceiling)",d:"Probability the player busts to depth/AHL. Boom-bust profiles (high ceiling, low floor) score higher."},
+  fitCert:{t:"Identity-fit Certainty",f:"f(match to Smashville Way identity traits, identity clarity)",d:"How confidently the org 'knows what it's getting.' A classic Smashville profile tightens the band; a stylistic outlier widens it."},
+  pickValue:{t:"Pick Value",f:"1000 × pick^(−0.62)",d:"Standard draft-pick value curve anchored so #1 ≈ 1000 points. Used by the trade calculator to test fairness within ±10%."},
+  draftGrade:{t:"Draft Class Grade",f:"55 + value-vs-slot×0.8 + (avgFit−65)×1.1 + positions×3",d:"Composite of value captured (board value vs. pick slot), average Smashville fit, and positional balance, mapped to a letter."}
+};
+const tipEl=document.createElement('div');tipEl.className='tip';document.body.appendChild(tipEl);
+const showTip=(e,html)=>{tipEl.innerHTML=html;tipEl.style.opacity=1;tipEl.style.left=(e.clientX+14)+'px';tipEl.style.top=(e.clientY-10)+'px';};
+const hideTip=()=>tipEl.style.opacity=0;
+const moveTip=e=>{tipEl.style.left=(e.clientX+14)+'px';tipEl.style.top=(e.clientY-10)+'px';};
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ===== INFO POPOVER SYSTEM: <span class="info" data-m="surplus"></span> ===== */
+const popEl=document.createElement('div');
+popEl.id='methodPop';
+document.body.appendChild(popEl);
+function showPop(e,key){
+  const m=METHOD[key];if(!m)return;
+  popEl.innerHTML=`<div class="mp-t">${m.t}</div><div class="mp-f">${m.f}</div><div class="mp-d">${m.d}</div>`;
+  popEl.style.display='block';
+  const r=e.target.getBoundingClientRect();
+  let x=r.left, y=r.bottom+8;
+  const w=300; if(x+w>window.innerWidth-12)x=window.innerWidth-w-12;
+  popEl.style.left=Math.max(12,x)+'px';popEl.style.top=y+'px';
+}
+function hidePop(){popEl.style.display='none';}
+function bindInfos(root=document){
+  root.querySelectorAll('.info:not([data-bound])').forEach(el=>{
+    el.setAttribute('data-bound','1');
+    el.addEventListener('mouseenter',e=>showPop(e,el.dataset.m));
+    el.addEventListener('mouseleave',hidePop);
+    el.addEventListener('click',e=>{e.stopPropagation();showPop(e,el.dataset.m);});
+  });
+}
+document.addEventListener('click',e=>{if(!e.target.classList.contains('info'))hidePop();});
+const infoIcon=key=>`<span class="info" data-m="${key}" title="How is this calculated?">ⓘ</span>`;
+
+/* ===== SNAPSHOT EXPORT (png) ===== */
+function exportSnapshot(el,filename){
+  if(typeof html2canvas==='undefined'){alert('Export library still loading — try again in a moment.');return;}
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  html2canvas(el,{backgroundColor:dark?'#0c1726':'#ffffff',scale:2,logging:false}).then(canvas=>{
+    const a=document.createElement('a');a.download=filename+'.png';a.href=canvas.toDataURL('image/png');a.click();
+  }).catch(()=>alert('Snapshot failed — try again.'));
+}
+
+/* ===== 01 CAP TABLE ===== */
+(function(){
+  const tb=document.querySelector('#capTable tbody');let key='age',dir=1;
+  const fmt=n=>'$'+n.toFixed(2)+'M';
+  const vc=s=>s>=1?'good':s<=-1?'bad':'mid';
+  const pbar=p=>{const c=p>=80?'var(--green)':p>=66?'var(--gold)':'var(--red)';
+    return `<span class="bar-cell"><span class="mini"><i style="width:${p}%;background:${c}"></i></span>${p}</span>`;};
+  function render(){
+    const rows=[...roster].sort((a,b)=>{let v=typeof a[key]==='string'?a[key].localeCompare(b[key]):a[key]-b[key];return v*dir;});
+    tb.innerHTML=rows.map(p=>`<tr><td>${p.name}<span class="pos">${p.pos}</span></td>
+      <td>${p.age}</td><td>${fmt(p.hit)}</td><td>${p.yrs}y</td><td>${pbar(p.prod)}</td>
+      <td class="val ${vc(p.surplus)}">${p.surplus>0?'+':''}${p.surplus.toFixed(1)}M</td></tr>`).join('');
+    document.querySelectorAll('#capTable th').forEach(th=>th.classList.toggle('sorted',th.dataset.c===key));
+  }
+  document.querySelectorAll('#capTable th').forEach(th=>th.addEventListener('click',()=>{
+    const k=th.dataset.c;if(k===key)dir*=-1;else{key=k;dir=th.dataset.t==='s'?1:-1;}render();}));
+  render();
+})();
+
+/* ===== 02 VALUE: weights, scatter, buy-low ===== */
+const W=[["Even-strength impact",34],["Age / projection curve",24],["Usage-adjusted scoring",22],["Defensive value",12],["Durability",8]];
+document.getElementById('weights').innerHTML=W.map(([n,v])=>`
+  <div style="margin:11px 0"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--slate)"><span>${n}</span><b style="font-family:var(--mono);color:var(--navy)">${v}%</b></div>
+  <div class="mini" style="width:100%;height:6px"><i style="width:${v}%;background:var(--navy)"></i></div></div>`).join('');
+
+(function(){
+  const svg=document.getElementById('scatter');const P={l:46,r:18,t:14,b:38},w=640,h=380;
+  const X=v=>P.l+v/10*(w-P.l-P.r), Y=v=>h-P.b-(v-50)/45*(h-P.t-P.b);
+  let s='';
+  for(let gx=0;gx<=10;gx+=2){s+=`<line class="grid-line" x1="${X(gx)}" y1="${P.t}" x2="${X(gx)}" y2="${h-P.b}"/>`;
+    s+=`<text class="axis-txt" x="${X(gx)}" y="${h-P.b+18}" text-anchor="middle">$${gx}M</text>`;}
+  for(let gy=50;gy<=95;gy+=15){s+=`<line class="grid-line" x1="${P.l}" y1="${Y(gy)}" x2="${w-P.r}" y2="${Y(gy)}"/>`;
+    s+=`<text class="axis-txt" x="${P.l-8}" y="${Y(gy)+3}" text-anchor="end">${gy}</text>`;}
+  s+=`<line x1="${X(0)}" y1="${Y(56)}" x2="${X(9.5)}" y2="${Y(56+4*9.5)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  s+=`<text class="axis-txt" x="${P.l+(w-P.l-P.r)/2}" y="${h-4}" text-anchor="middle">Cap Hit</text>`;
+  s+=`<text class="axis-txt" transform="rotate(-90)" x="${-h/2}" y="13" text-anchor="middle">Value Score</text>`;
+  svg.innerHTML=s;
+  roster.forEach(p=>{const fair=56+4*p.hit,over=p.prod-fair;
+    const col=over>5?'var(--green)':over<-5?'var(--red)':'var(--gold)';
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',X(p.hit));c.setAttribute('cy',Y(p.prod));c.setAttribute('r',6);
+    c.setAttribute('fill',col);c.setAttribute('opacity','.88');c.style.cursor='pointer';c.style.transition='r .12s';
+    c.addEventListener('mouseenter',e=>{c.setAttribute('r',9);showTip(e,`${p.name} <span style="opacity:.7">${p.pos}</span><br><b>$${p.hit}M · score ${p.prod} · ${p.surplus>0?'+':''}${p.surplus}M</b>`);});
+    c.addEventListener('mousemove',moveTip);c.addEventListener('mouseleave',()=>{c.setAttribute('r',6);hideTip();});
+    svg.appendChild(c);});
+})();
+
+const bl=[...roster].map(p=>({...p,eff:p.surplus/p.hit})).sort((a,b)=>b.eff-a.eff).slice(0,4);
+document.getElementById('buylow').innerHTML=bl.map(p=>`
+  <div style="display:flex;align-items:center;padding:11px 20px;border-bottom:1px solid var(--line-soft);gap:10px">
+  <div><div style="font-weight:600;color:var(--ink)">${p.name}</div>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">$${p.hit}M · ${p.pos} · age ${p.age}</div></div>
+  <div style="margin-left:auto;font-family:var(--mono);font-weight:700;color:var(--green)">+${p.surplus.toFixed(1)}M</div></div>`).join('');
+
+/* ===== TARGETS: prospects + free agents ===== */
+const targets=[
+  {id:"t1",name:"Gavin McKenna",label:"Prospect · LW · 2026 #1",type:"prospect",
+   tiers:[["Bust / depth",10],["Middle-6",24],["Top-6 contributor",38],["Star",28]],
+   proj:{GP:78,G:30,A:42,P:72},band:{P:[58,84]},
+   metrics:{Offense:90,Defense:58,Transition:84,Shot:82,Physical:54,IQ:86},
+   comps:[["Jake Guentzel (league)",88],["Filip Forsberg (Pred)",84],["draft-tier elite W",81]]},
+  {id:"t2",name:"Carson Carels",label:"Prospect · D · 2026 mid-1st",type:"prospect",
+   tiers:[["Bust / depth",20],["#4-5 D",34],["Top-pair D",34],["Norris-track",12]],
+   proj:{GP:80,G:8,A:31,P:39},band:{P:[26,49]},
+   metrics:{Offense:62,Defense:84,Transition:78,Shot:64,Physical:72,IQ:82},
+   comps:[["Jakob Chychrun (league)",84],["Brady Skjei (Pred)",80],["draft-tier 2-way D",76]]},
+  {id:"t3",name:"UFA: Power-RW",label:"Free agent · RW · age 27",type:"fa",
+   tiers:[["Decline / overpay",27],["Maintains",41],["Mild step up",24],["Breakout",8]],
+   proj:{GP:79,G:29,A:34,P:63},band:{P:[51,72]},
+   metrics:{Offense:81,Defense:54,Transition:68,Shot:84,Physical:66,IQ:70},
+   comps:[["Forsberg (Pred)",86],["Jake Guentzel (league)",83],["Comparable UFA '24 class",74]]}
+];
+
+/* ===== 03 SCOUTING TREE ===== */
+const tcol=['#c8362f','#d99814','#2f6fb0','#3f8f4f'];
+/* ---- comp universe: name, tag, attribute fingerprint ---- */
+const ATTRS=["Offense","Defense","Transition","Shot","Physical","IQ"];
+const compUniverse=[
+  ["Tomas Hertl","league",[78,64,76,72,70,79]],["Jake Guentzel","league",[84,52,70,86,55,74]],
+  ["Jakob Chychrun","league",[64,80,72,70,72,76]],["Wyatt Johnston","hist",[76,60,78,71,52,80]],
+  ["Brock Faber","hist",[58,84,74,62,68,82]],["Tim Stützle","league",[88,56,84,76,58,82]],
+  ["Filip Forsberg","pred",[86,58,72,84,60,77]],["Fedor Svechkov","pred",[62,70,68,60,64,74]],
+  ["Brady Skjei","pred",[60,74,68,66,76,70]],["Roman Josi","pred",[82,72,86,78,64,88]],
+  ["Luke Evangelista","pred",[79,56,70,72,48,75]],["Comparable UFA '24","hist",[74,54,66,80,62,70]]
+];
+let TARGETS=JSON.parse(JSON.stringify(targets)); // mutable working set
+TARGETS.forEach(t=>{t.attrs=ATTRS.map(a=>t.metrics[a]);});
+let curId=TARGETS[0].id, overlayName='';
+
+/* ---- THE MODEL: attributes → everything ---- */
+function model(t){
+  const a=t.attrs, [off,def,tr,shot,phys,iq]=a;
+  const ceiling=(off*.32+shot*.22+tr*.18+iq*.18+def*.06+phys*.04); // star potential
+  const floor=(def*.28+iq*.26+tr*.18+phys*.16+off*.08+shot*.04);   // NHL-floor signal
+  const isFA=t.type!=='prospect';
+  let star=Math.max(2,(ceiling-62)*1.8), top=Math.max(6,38-(Math.abs(ceiling-72))*0.9+floor*0.15),
+      mid=Math.max(8,floor*0.55-star*0.2), bust=Math.max(4,(74-floor)*1.1-ceiling*0.12);
+  if(isFA){star*=0.55;bust*=0.7;mid*=1.25;}
+  const sum=star+top+mid+bust;
+  const tiers=[
+    [isFA?"Decline / overpay":"Bust / depth",Math.round(bust/sum*100),'#c8362f'],
+    [isFA?"Maintains":"Bottom-6 / #4-5",Math.round(mid/sum*100),'#d99814'],
+    [isFA?"Mild step up":"Top-6 / top-pair",Math.round(top/sum*100),'#2f6fb0'],
+    [isFA?"Breakout":"Star",Math.round(star/sum*100),'#3f8f4f']
+  ];
+  const diff=100-tiers.reduce((s,x)=>s+x[1],0);tiers[2][1]+=diff;
+  const pPts=Math.round((off*.5+shot*.28+iq*.16+tr*.06)*0.78);
+  const variance=isFA?7:14-(floor-50)*0.12;
+  const band=[Math.max(10,Math.round(pPts-variance)),Math.round(pPts+variance)];
+  const g=Math.round(pPts*0.42), as=pPts-g, gp=isFA?78:Math.round(70+iq*0.1);
+  const risk=Math.round(Math.min(96,variance*3.4+(t.type==='prospect'?18:0)+Math.max(0,60-floor)*0.7));
+  const comps=compUniverse.map(([nm,tag,fp])=>{
+    let dot=0,m1=0,m2=0;for(let i=0;i<6;i++){dot+=a[i]*fp[i];m1+=a[i]**2;m2+=fp[i]**2;}
+    const sim=Math.round(dot/(Math.sqrt(m1)*Math.sqrt(m2))*100);
+    return [nm,tag,sim];
+  }).sort((x,y)=>y[2]-x[2]);
+  return {tiers,proj:{GP:gp,G:g,A:as,P:pPts},band,risk,comps};
+}
+
+const cur=()=>TARGETS.find(t=>t.id===curId);
+let curType='prospect';
+
+function renderPicker(){
+  const vis=TARGETS.filter(t=>t.type===curType);
+  document.getElementById('targetPick').innerHTML=vis.map(t=>`
+    <button class="tgt ${t.id===curId?'on':''}" data-id="${t.id}"
+      style="text-align:left;padding:11px 14px;border-radius:10px;border:1px solid ${t.id===curId?'var(--gold)':'var(--line)'};
+      background:${t.id===curId?'var(--gold-bg)':'var(--panel)'};cursor:pointer;box-shadow:var(--shadow);min-width:170px;transition:.14s">
+      <div style="font-family:var(--disp);font-weight:700;color:var(--ink);font-size:13px">${t.name}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${t.label}</div>
+    </button>`).join('') || `<div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:8px">No ${curType} targets yet — add one →</div>`;
+  document.querySelectorAll('#targetPick .tgt').forEach(b=>b.addEventListener('click',()=>{curId=b.dataset.id;renderAll();}));
+}
+
+function renderSliders(t){
+  document.getElementById('sliders').innerHTML=`
+    <input id="tName" value="${t.name.replace(/"/g,'&quot;')}" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--disp);font-weight:700;font-size:14px;padding:8px 10px;margin-bottom:4px">
+    `+ATTRS.map((a,i)=>`
+    <div style="margin:13px 0">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+        <span style="color:var(--slate)">${a}</span><b id="sv${i}" style="font-family:var(--mono);color:var(--navy)">${t.attrs[i]}</b></div>
+      <input type="range" min="20" max="99" value="${t.attrs[i]}" data-i="${i}" class="attr-slider" style="width:100%">
+    </div>`).join('');
+  document.getElementById('tName').addEventListener('input',e=>{cur().name=e.target.value;
+    document.getElementById('treeName').textContent=e.target.value;renderPicker();});
+  document.querySelectorAll('.attr-slider').forEach(sl=>sl.addEventListener('input',e=>{
+    const i=+e.target.dataset.i;const t=cur();t.attrs[i]=+e.target.value;
+    document.getElementById('sv'+i).textContent=e.target.value;
+    renderOutputs();
+  }));
+}
+
+function drawTree(t,m){
+  document.getElementById('treeName').textContent=t.name;
+  const svg=document.getElementById('tree');const H=420,rootY=H/2,leafX=290,tierW=240;
+  let s=`<rect x="36" y="${rootY-26}" width="80" height="52" rx="9" fill="var(--navy)"/>
+    <text x="76" y="${rootY-4}" text-anchor="middle" fill="#fff" font-family="var(--disp)" font-weight="700" font-size="12">${t.type==='fa'?'UFA':t.type==='trade'?'TRADE':'Draft'}</text>
+    <text x="76" y="${rootY+14}" text-anchor="middle" fill="rgba(255,255,255,.7)" font-family="var(--mono)" font-size="9">signals →</text>`;
+  const n=m.tiers.length,gap=(H-50)/n;
+  m.tiers.forEach((tier,i)=>{const y=34+gap*i+gap/2,col=tier[2];
+    s+=`<path d="M116 ${rootY} C188 ${rootY}, 206 ${y}, ${leafX} ${y}" fill="none" stroke="${col}" stroke-width="${1+tier[1]/9}" opacity=".5"/>`;
+    s+=`<rect class="tierBox" data-i="${i}" x="${leafX}" y="${y-22}" width="${tierW}" height="44" rx="9" fill="var(--panel)" stroke="${col}" stroke-width="1.5" style="cursor:pointer"/>`;
+    s+=`<circle cx="${leafX+19}" cy="${y}" r="5" fill="${col}"/>`;
+    s+=`<text x="${leafX+33}" y="${y-2}" fill="var(--ink)" font-family="var(--body)" font-weight="600" font-size="12.5" style="pointer-events:none">${tier[0]}</text>`;
+    s+=`<text x="${leafX+tierW-14}" y="${y+5}" text-anchor="end" fill="${col}" font-family="var(--mono)" font-weight="700" font-size="16" style="pointer-events:none">${tier[1]}%</text>`;
+    s+=`<rect x="${leafX+33}" y="${y+6}" width="130" height="4" rx="2" fill="var(--line)" style="pointer-events:none"/>`;
+    s+=`<rect x="${leafX+33}" y="${y+6}" width="${tier[1]/45*130}" height="4" rx="2" fill="${col}" style="pointer-events:none"/>`;});
+  svg.innerHTML=s;
+  svg.querySelectorAll('.tierBox').forEach(b=>b.addEventListener('click',()=>drawWhatIf(t,m,+b.dataset.i)));
+}
+function drawTreeRadar(t){
+  const svg=document.getElementById('treeRadar');const cx=180,cy=150,R=104,n=6;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/n;let s='';
+  [0.25,0.5,0.75,1].forEach(r=>{let pts=ATTRS.map((_,i)=>`${cx+Math.cos(ang(i))*R*r},${cy+Math.sin(ang(i))*R*r}`).join(' ');
+    s+=`<polygon points="${pts}" fill="none" stroke="var(--line)" stroke-width="1"/>`;});
+  ATTRS.forEach((k,i)=>{const x=cx+Math.cos(ang(i))*R,y=cy+Math.sin(ang(i))*R;
+    s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/>`;
+    const lx=cx+Math.cos(ang(i))*(R+18),ly=cy+Math.sin(ang(i))*(R+18);
+    s+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--slate)">${k.slice(0,4)}</text>`;});
+  if(overlayName){const ov=compUniverse.find(c=>c[0]===overlayName);
+    if(ov){const pts=ov[2].map((v,i)=>`${cx+Math.cos(ang(i))*R*v/100},${cy+Math.sin(ang(i))*R*v/100}`).join(' ');
+      s+=`<polygon points="${pts}" fill="var(--blue)" fill-opacity=".12" stroke="var(--blue)" stroke-width="1.5" stroke-dasharray="4 3"/>`;}}
+  const pts=t.attrs.map((v,i)=>`${cx+Math.cos(ang(i))*R*v/100},${cy+Math.sin(ang(i))*R*v/100}`).join(' ');
+  s+=`<polygon points="${pts}" fill="var(--gold)" fill-opacity=".25" stroke="var(--gold)" stroke-width="2"/>`;
+  svg.innerHTML=s;
+}
+function drawProj(t,m){
+  const p=m.proj,mx=90;
+  document.getElementById('projLine').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+    ${[['GP',p.GP],['G',p.G],['A',p.A],['P',p.P]].map(([k,v])=>`
+      <div><div style="font-family:var(--disp);font-size:25px;font-weight:700;color:var(--ink)">${v}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">${k}</div></div>`).join('')}</div>
+    <div style="margin-top:15px;font-family:var(--mono);font-size:11px;color:var(--slate);margin-bottom:18px">Points — 80% band</div>
+    <div style="position:relative;height:30px;background:var(--field);border-radius:8px">
+      <div style="position:absolute;top:0;bottom:0;left:${m.band[0]/mx*100}%;right:${100-m.band[1]/mx*100}%;background:var(--gold-bg);border-radius:6px;border:1px solid var(--gold)"></div>
+      <div style="position:absolute;top:-3px;bottom:-3px;left:calc(${p.P/mx*100}% - 1px);width:2px;background:var(--navy)"></div>
+      <div style="position:absolute;left:calc(${p.P/mx*100}% - 10px);font-family:var(--mono);font-size:10px;color:var(--navy);font-weight:700;top:-18px">${p.P}</div></div>
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px"><span>${m.band[0]}</span><span>${m.band[1]}</span></div>`;
+}
+function drawRisk(m){
+  const r=m.risk;const col=r>=66?'var(--red)':r>=40?'var(--gold)':'var(--green)';
+  const label=r>=66?'High risk · boom-bust':r>=40?'Moderate · some volatility':'Safe · narrow outcomes';
+  document.getElementById('riskMeter').innerHTML=`
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+      <span style="font-family:var(--disp);font-size:30px;font-weight:700;color:${col}">${r}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">/ 100 risk</span></div>
+    <div class="mini" style="width:100%;height:8px"><i style="width:${r}%;background:${col}"></i></div>
+    <div style="font-size:12px;color:var(--slate);margin-top:10px">${label}</div>`;
+}
+function drawWhatIf(t,m,tierIdx){
+  if(tierIdx==null){tierIdx=m.tiers.reduce((bi,x,i,arr)=>x[1]>arr[bi][1]?i:bi,0);}
+  const tierName=m.tiers[tierIdx][0],pct=m.tiers[tierIdx][1];
+  const aav=[1.0,2.6,5.5,9.0][tierIdx];
+  const prodAtTier=[40,58,76,90][tierIdx];
+  const marketWorth=+(prodAtTier*0.11).toFixed(1);
+  const surplus=+(marketWorth-aav).toFixed(1);
+  const acq=t.type==='prospect'?'Entry-level → 2nd contract':t.type==='trade'?'Acquisition + this AAV':'UFA signing at this AAV';
+  document.getElementById('whatif').innerHTML=`
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px">IF OUTCOME = <b style="color:var(--ink)">${tierName}</b> (${pct}% likely)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:var(--field);border-radius:9px;padding:11px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Proj. AAV</div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:var(--ink)">$${aav}M</div></div>
+      <div style="background:var(--field);border-radius:9px;padding:11px"><div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Surplus</div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:${surplus>=0?'var(--green)':'var(--red)'}">${surplus>=0?'+':''}$${surplus}M</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--slate);line-height:1.5">${acq}. At this tier the contract is <b style="color:${surplus>=0?'var(--green)':'var(--red)'}">${surplus>=0?'a surplus asset':'underwater'}</b> vs modeled worth of $${marketWorth}M.</div>`;
+}
+function drawComps(m){
+  const tagLabel={pred:'Pred',league:'League',hist:'Historical'};
+  const tagCol={pred:'var(--gold)',league:'var(--blue)',hist:'var(--green)'};
+  document.getElementById('comps').innerHTML=m.comps.slice(0,5).map(([nm,tag,sim])=>`
+    <div style="padding:11px 20px;border-bottom:1px solid var(--line-soft)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-weight:600;color:var(--ink);font-size:13px">${nm}</span>
+        <span class="pill ${tag==='pred'?'gold':tag==='league'?'navy':'green'}" style="font-size:9px">${tagLabel[tag]}</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-weight:700;color:var(--ink)">${sim}%</span></div>
+      <div class="mini" style="width:100%;height:6px"><i style="width:${sim}%;background:${tagCol[tag]}"></i></div></div>`).join('');
+}
+function renderOverlaySel(){
+  const preds=compUniverse.filter(c=>c[1]==='pred');
+  document.getElementById('overlaySel').innerHTML=`<option value="">None — target only</option>`+
+    preds.map(p=>`<option value="${p[0]}" ${p[0]===overlayName?'selected':''}>${p[0]}</option>`).join('');
+  document.getElementById('overlaySel').onchange=e=>{overlayName=e.target.value;
+    document.getElementById('overlayNote').textContent=overlayName?`Dashed blue = ${overlayName}'s profile`:'';
+    drawTreeRadar(cur());};
+}
+function renderOutputs(){const t=cur(),m=model(t);drawTree(t,m);drawTreeRadar(t);drawProj(t,m);drawRisk(m);drawWhatIf(t,m,null);drawComps(m);}
+function renderAll(){renderPicker();const t=cur();renderSliders(t);renderOutputs();}
+
+document.querySelectorAll('#typeToggle .chip').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#typeToggle .chip').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  curType=b.dataset.ty;const first=TARGETS.find(t=>t.type===curType);
+  if(first)curId=first.id;renderAll();
+}));
+let addN=0;
+document.getElementById('addTarget').addEventListener('click',()=>{
+  addN++;const id='new'+addN;
+  const labels={prospect:'Prospect · new',fa:'Free agent · new',trade:'Trade target · new'};
+  TARGETS.push({id,name:'New Target '+addN,label:labels[curType],type:curType,metrics:{},attrs:[65,60,62,63,58,64]});
+  curId=id;renderAll();
+});
+
+renderOverlaySel();
+renderAll();
+function selectTree(){renderAll();}
+
+/* ===== 04 COMPARISON LAB ===== */
+// cohort box-plot data per metric: [min,q1,med,q3,max]
+const cohorts={
+  "Points/60":{Preds:[1.1,1.7,2.1,2.6,3.4],League:[0.8,1.5,2.0,2.6,3.9],Draftees:[0.6,1.3,1.8,2.4,3.6]},
+  "xGF%":{Preds:[44,48,51,54,59],League:[42,47,50,54,61],Draftees:[40,46,49,53,58]},
+  "Zone Entries":{Preds:[3.2,4.5,5.4,6.3,7.8],League:[2.8,4.2,5.2,6.4,8.5],Draftees:[2.5,4.0,5.0,6.2,8.0]}
+};
+function drawBox(t){
+  const svg=document.getElementById('boxplot');const W=560,H=340,P={l:88,r:20,t:18,b:30};
+  const metrics=Object.keys(cohorts);const groups=["Preds","League","Draftees"];
+  const gcol={Preds:'var(--gold)',League:'var(--blue)',Draftees:'var(--slate)'};
+  const rowH=(H-P.t-P.b)/metrics.length;
+  let s='';
+  metrics.forEach((m,mi)=>{
+    const all=groups.flatMap(g=>cohorts[m][g]);const lo=Math.min(...all),hi=Math.max(...all);
+    const X=v=>P.l+(v-lo)/(hi-lo)*(W-P.l-P.r);
+    const cy0=P.t+rowH*mi;
+    s+=`<text x="${P.l-12}" y="${cy0+rowH/2+4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--ink)">${m}</text>`;
+    groups.forEach((g,gi)=>{
+      const [mn,q1,md,q3,mx]=cohorts[m][g];const y=cy0+12+gi*((rowH-18)/3);const c=gcol[g];
+      s+=`<line x1="${X(mn)}" y1="${y}" x2="${X(mx)}" y2="${y}" stroke="${c}" stroke-width="1" opacity=".5"/>`;
+      s+=`<line x1="${X(mn)}" y1="${y-3}" x2="${X(mn)}" y2="${y+3}" stroke="${c}" stroke-width="1"/>`;
+      s+=`<line x1="${X(mx)}" y1="${y-3}" x2="${X(mx)}" y2="${y+3}" stroke="${c}" stroke-width="1"/>`;
+      s+=`<rect x="${X(q1)}" y="${y-5}" width="${X(q3)-X(q1)}" height="10" rx="2" fill="${c}" opacity=".22" stroke="${c}" stroke-width="1"/>`;
+      s+=`<line x1="${X(md)}" y1="${y-5}" x2="${X(md)}" y2="${y+5}" stroke="${c}" stroke-width="2"/>`;
+    });
+  });
+  // legend
+  let lx=P.l;s+=`<g>`;["Preds","League","Draftees"].forEach(g=>{
+    s+=`<circle cx="${lx}" cy="${H-8}" r="4" fill="${gcol[g]}"/><text x="${lx+9}" y="${H-4}" font-family="var(--mono)" font-size="10" fill="var(--slate)">${g}</text>`;lx+=110;});
+  s+=`</g>`;
+  svg.innerHTML=s;
+}
+function drawRadar(t){
+  const svg=document.getElementById('radar');const cx=210,cy=160,R=120;
+  const keys=Object.keys(t.metrics);const n=keys.length;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/n;
+  let s='';
+  [0.25,0.5,0.75,1].forEach(r=>{let pts=keys.map((_,i)=>`${cx+Math.cos(ang(i))*R*r},${cy+Math.sin(ang(i))*R*r}`).join(' ');
+    s+=`<polygon points="${pts}" fill="none" stroke="var(--line)" stroke-width="1"/>`;});
+  keys.forEach((k,i)=>{const x=cx+Math.cos(ang(i))*R,y=cy+Math.sin(ang(i))*R;
+    s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    const lx=cx+Math.cos(ang(i))*(R+22),ly=cy+Math.sin(ang(i))*(R+22);
+    s+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--slate)">${k}</text>`;});
+  const pts=keys.map((k,i)=>`${cx+Math.cos(ang(i))*R*t.metrics[k]/100},${cy+Math.sin(ang(i))*R*t.metrics[k]/100}`).join(' ');
+  s+=`<polygon points="${pts}" fill="var(--gold)" fill-opacity=".22" stroke="var(--gold)" stroke-width="2"/>`;
+  keys.forEach((k,i)=>{const x=cx+Math.cos(ang(i))*R*t.metrics[k]/100,y=cy+Math.sin(ang(i))*R*t.metrics[k]/100;
+    s+=`<circle cx="${x}" cy="${y}" r="3" fill="var(--gold-deep)"/>`;});
+  svg.innerHTML=s;
+}
+function drawKDE(t){
+  const svg=document.getElementById('kde');const W=560,H=300,P={l:20,r:20,t:18,b:34};
+  // build a smooth-ish league distribution from roster value scores + synthetic spread
+  const vals=roster.map(p=>p.prod).concat([55,59,63,67,71,75,79,72,68,64,61,77,82,70,66]);
+  const lo=45,hi=95,bins=50;const dens=new Array(bins).fill(0);
+  vals.forEach(v=>{for(let b=0;b<bins;b++){const x=lo+(hi-lo)*b/(bins-1);dens[b]+=Math.exp(-((x-v)**2)/(2*36));}});
+  const mx=Math.max(...dens);
+  const X=b=>P.l+b/(bins-1)*(W-P.l-P.r),Y=d=>H-P.b-d/mx*(H-P.t-P.b);
+  let path='',area='';
+  dens.forEach((d,b)=>{const x=X(b),y=Y(d);path+=(b===0?'M':'L')+x+' '+y+' ';});
+  area=path+`L${X(bins-1)} ${H-P.b} L${X(0)} ${H-P.b} Z`;
+  let s=`<defs><linearGradient id="kg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--navy)" stop-opacity=".3"/><stop offset="1" stop-color="var(--navy)" stop-opacity="0"/></linearGradient></defs>`;
+  s+=`<path d="${area}" fill="url(#kg)"/><path d="${path}" fill="none" stroke="var(--navy)" stroke-width="2"/>`;
+  [50,60,70,80,90].forEach(v=>{const x=P.l+(v-lo)/(hi-lo)*(W-P.l-P.r);
+    s+=`<text class="axis-txt" x="${x}" y="${H-P.b+18}" text-anchor="middle">${v}</text>`;});
+  // marker = target's offense as proxy value
+  const tv=Math.round((t.metrics.Offense+t.metrics.IQ)/2*0.5+50);
+  const mxx=P.l+(tv-lo)/(hi-lo)*(W-P.l-P.r);
+  s+=`<line x1="${mxx}" y1="${P.t}" x2="${mxx}" y2="${H-P.b}" stroke="var(--gold)" stroke-width="2" stroke-dasharray="4 3"/>`;
+  s+=`<text x="${mxx}" y="${P.t+2}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="10" font-weight="700">${t.name.split(' ').pop()} ~${tv}</text>`;
+  svg.innerHTML=s;
+}
+function drawPScatter(t){
+  const svg=document.getElementById('pscatter');const W=560,H=300,P={l:42,r:18,t:16,b:34};
+  const X=v=>P.l+v/100*(W-P.l-P.r),Y=v=>H-P.b-v/100*(H-P.t-P.b);
+  let s='';
+  for(let g=0;g<=100;g+=25){s+=`<line class="grid-line" x1="${X(g)}" y1="${P.t}" x2="${X(g)}" y2="${H-P.b}"/>`;
+    s+=`<line class="grid-line" x1="${P.l}" y1="${Y(g)}" x2="${W-P.r}" y2="${Y(g)}"/>`;
+    s+=`<text class="axis-txt" x="${X(g)}" y="${H-P.b+16}" text-anchor="middle">${g}</text>`;
+    s+=`<text class="axis-txt" x="${P.l-7}" y="${Y(g)+3}" text-anchor="end">${g}</text>`;}
+  s+=`<text class="axis-txt" x="${(P.l+W-P.r)/2}" y="${H-2}" text-anchor="middle">Offense pct</text>`;
+  s+=`<text class="axis-txt" transform="rotate(-90)" x="${-H/2}" y="11" text-anchor="middle">Defense pct</text>`;
+  // background league cloud
+  for(let i=0;i<40;i++){const x=Math.random()*100,y=Math.random()*100;
+    s+=`<circle cx="${X(x)}" cy="${Y(y)}" r="3" fill="var(--slate)" opacity=".22"/>`;}
+  // target
+  s+=`<circle cx="${X(t.metrics.Offense)}" cy="${Y(t.metrics.Defense)}" r="8" fill="var(--gold)" stroke="var(--navy)" stroke-width="2"/>`;
+  s+=`<text x="${X(t.metrics.Offense)}" y="${Y(t.metrics.Defense)-13}" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="10" font-weight="700">${t.name.split(' ').pop()}</text>`;
+  svg.innerHTML=s;
+}
+function selectLab(t){drawBox(t);drawRadar(t);drawKDE(t);drawPScatter(t);}
+
+// lab picker (independent of workbench)
+document.getElementById('labPick').innerHTML=targets.map((t,i)=>`
+  <button class="ltgt ${i===0?'on':''}" data-id="${t.id}"
+    style="text-align:left;padding:11px 14px;border-radius:10px;border:1px solid ${i===0?'var(--gold)':'var(--line)'};
+    background:${i===0?'var(--gold-bg)':'var(--panel)'};cursor:pointer;box-shadow:var(--shadow);min-width:170px;transition:.14s">
+    <div style="font-family:var(--disp);font-weight:700;color:var(--ink);font-size:13px">${t.name}</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${t.label}</div>
+  </button>`).join('');
+document.querySelectorAll('#labPick .ltgt').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#labPick .ltgt').forEach(x=>{x.classList.remove('on');x.style.background='var(--panel)';x.style.borderColor='var(--line)';});
+  b.classList.add('on');b.style.background='var(--gold-bg)';b.style.borderColor='var(--gold)';
+  selectLab(targets.find(x=>x.id===b.dataset.id));
+}));
+selectLab(targets[0]);
+
+/* ===== 05 DRAFT VALUE ===== */
+const pickVal=n=>Math.round(1000*Math.pow(n,-0.62));
+(function(){
+  const svg=document.getElementById('curve');const P={l:44,r:16,t:16,b:34},w=660,h=300,xMax=32,yMax=pickVal(1);
+  const X=n=>P.l+(n-1)/(xMax-1)*(w-P.l-P.r),Y=v=>h-P.b-v/yMax*(h-P.t-P.b);
+  let s=`<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>`;
+  for(let gy=0;gy<=yMax;gy+=200){s+=`<line class="grid-line" x1="${P.l}" y1="${Y(gy)}" x2="${w-P.r}" y2="${Y(gy)}"/>`;
+    s+=`<text class="axis-txt" x="${P.l-8}" y="${Y(gy)+3}" text-anchor="end">${gy}</text>`;}
+  [1,5,10,16,24,32].forEach(n=>s+=`<text class="axis-txt" x="${X(n)}" y="${h-P.b+18}" text-anchor="middle">#${n}</text>`);
+  let path='';for(let n=1;n<=32;n++)path+=(n===1?'M':'L')+X(n)+' '+Y(pickVal(n))+' ';
+  s+=`<path d="${path}L${X(32)} ${Y(0)} L${X(1)} ${Y(0)} Z" fill="url(#cg)" opacity=".5"/>`;
+  s+=`<path d="${path}" fill="none" stroke="var(--gold)" stroke-width="2.5"/>`;
+  s+=`<circle cx="${X(10)}" cy="${Y(pickVal(10))}" r="7" fill="var(--gold)" stroke="var(--panel)" stroke-width="2"/>`;
+  s+=`<text x="${X(10)}" y="${Y(pickVal(10))-14}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="11" font-weight="700">#10 = ${pickVal(10)}</text>`;
+  svg.innerHTML=s;
+})();
+const assets=[{l:'#10 (2026)',v:pickVal(10)},{l:'#42 (2026)',v:135},{l:'2027 1st (proj #12)',v:pickVal(12)},
+  {l:'2027 2nd',v:140},{l:'Prospect B+',v:340},{l:'Prospect B',v:210},{l:'Evangelista',v:520},{l:'Mid-pair D',v:300}];
+function buildPool(id){document.getElementById(id).innerHTML=assets.map((a,i)=>`<span class="chip" data-v="${a.v}" data-k="${id}-${i}">${a.l}</span>`).join('');}
+buildPool('poolA');buildPool('poolB');
+function recalc(){
+  const sum=id=>[...document.querySelectorAll(`#${id} .chip.on`)].reduce((t,c)=>t+ +c.dataset.v,0);
+  const a=sum('poolA'),b=sum('poolB');
+  document.getElementById('totalA').textContent=a;document.getElementById('totalB').textContent=b;
+  const v=document.getElementById('verdict'),sub=document.getElementById('verdictSub');
+  if(!a&&!b){v.textContent='add picks';v.style.color='var(--muted)';sub.textContent='to evaluate';return;}
+  const hi=Math.max(a,b),lo=Math.min(a,b),gap=hi?(hi-lo)/hi:0;
+  if(gap<=0.10){v.textContent='FAIR';v.style.color='var(--green)';sub.textContent=`${(gap*100).toFixed(0)}% gap`;}
+  else{const over=a>b;v.textContent=over?'OVERPAY':'WIN';v.style.color=over?'var(--red)':'var(--green)';
+    sub.textContent=`${(gap*100).toFixed(0)}% gap · ${over?'NSH sends too much':'value for NSH'}`;}
+}
+document.querySelectorAll('#poolA,#poolB').forEach(p=>p.addEventListener('click',e=>{
+  if(e.target.classList.contains('chip')){e.target.classList.toggle('on');recalc();}}));
+
+/* ===== 06 FINANCE & FORECAST ===== */
+(function(){
+  const svg=document.getElementById('capForecast');const W=660,H=320,P={l:50,r:20,t:20,b:40};
+  const years=['26-27','27-28','28-29','29-30'];const ceil=[103.5,112,121.5,131];
+  const committed=[58.8,52.3,41.0,29.5]; // core only, declining as deals expire
+  const yMax=140;const bw=(W-P.l-P.r)/years.length;
+  const Y=v=>H-P.b-v/yMax*(H-P.t-P.b);
+  let s='';
+  for(let g=0;g<=140;g+=35){s+=`<line class="grid-line" x1="${P.l}" y1="${Y(g)}" x2="${W-P.r}" y2="${Y(g)}"/>`;
+    s+=`<text class="axis-txt" x="${P.l-8}" y="${Y(g)+3}" text-anchor="end">$${g}M</text>`;}
+  years.forEach((yr,i)=>{
+    const cx=P.l+bw*i+bw/2;const barW=bw*0.42;
+    s+=`<rect x="${cx-barW/2}" y="${Y(committed[i])}" width="${barW}" height="${H-P.b-Y(committed[i])}" rx="4" fill="var(--navy)"/>`;
+    s+=`<text x="${cx}" y="${Y(committed[i])-6}" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="700" fill="var(--navy)">$${committed[i]}M</text>`;
+    s+=`<text class="axis-txt" x="${cx}" y="${H-P.b+18}" text-anchor="middle">${yr}</text>`;
+  });
+  // ceiling line
+  let cl='';ceil.forEach((c,i)=>{const cx=P.l+bw*i+bw/2;cl+=(i===0?'M':'L')+cx+' '+Y(c)+' ';});
+  s+=`<path d="${cl}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+  ceil.forEach((c,i)=>{const cx=P.l+bw*i+bw/2;s+=`<circle cx="${cx}" cy="${Y(c)}" r="4" fill="var(--gold)"/>`;});
+  s+=`<text x="${P.l+bw*3+bw/2}" y="${Y(ceil[3])-10}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="10" font-weight="700">ceiling</text>`;
+  s+=`<g><rect x="${W-160}" y="${P.t}" width="11" height="11" rx="2" fill="var(--navy)"/><text x="${W-145}" y="${P.t+10}" font-family="var(--mono)" font-size="10" fill="var(--slate)">Core committed</text></g>`;
+  svg.innerHTML=s;
+})();
+(function(){
+  const tb=document.querySelector('#verdictTable tbody');
+  const worth=p=>+(p.hit+p.surplus).toFixed(1);
+  const rows=[...roster].sort((a,b)=>a.surplus-b.surplus);
+  tb.innerHTML=rows.map(p=>{
+    const w=worth(p);const vd=p.surplus<=-2?['Overpaid','red']:p.surplus<-0.5?['Slight over','gold']:p.surplus>1?['Bargain','green']:['Fair','navy'];
+    const act=p.surplus<=-2?'Trade / retain':p.surplus>2?'Extend early':'Hold';
+    return `<tr><td>${p.name}<span class="pos">${p.pos}</span></td><td>$${p.hit}M</td>
+      <td>$${w}M</td><td class="tl"><span class="pill ${vd[1]}">${vd[0]}</span></td>
+      <td class="tl" style="color:var(--slate)">${act}</td></tr>`;}).join('');
+})();
+
+/* ===== 07 FUTURE LINEUP — 5-year tabs + drag-and-drop ===== */
+// player universe for the lineup: current roster (with contract end), real farm prospects (with NHL ETA year)
+const LU_YEARS=[2026,2027,2028,2029,2030];
+let luYear=2026;
+// contract-end seasons (start year). After this, player is a UFA/gone from the model.
+const luRoster=[
+  {id:'forsberg',n:'Forsberg',pos:'LW',cap:8.5,end:2029,age:32},
+  {id:'oreilly',n:"O'Reilly",pos:'C',cap:4.5,end:2026,age:35},
+  {id:'evangelista',n:'Evangelista',pos:'RW',cap:2.1,end:2027,age:24},
+  {id:'lheureux',n:"L'Heureux",pos:'LW',cap:0.86,end:2026,age:23},
+  {id:'svechkov',n:'Svechkov',pos:'C',cap:0.93,end:2026,age:22},
+  {id:'stamkos',n:'Stamkos',pos:'C',cap:8.0,end:2027,age:36},
+  {id:'nyquist',n:'Nyquist',pos:'RW',cap:3.19,end:2026,age:37},
+  {id:'marchessault',n:'Marchessault',pos:'RW',cap:5.5,end:2028,age:35},
+  {id:'josi',n:'Josi',pos:'D',cap:9.06,end:2027,age:36},
+  {id:'skjei',n:'Skjei',pos:'D',cap:7.0,end:2030,age:32},
+  {id:'stastney',n:'Stastney',pos:'D',cap:1.4,end:2027,age:26},
+  {id:'saros',n:'Saros',pos:'G',cap:7.74,end:2032,age:31}
+];
+// real farm prospects -> become available in their ETA year, on ELC
+const FARM_ETA={'Tanner Molendyk':2026,'Joakim Kemell':2026,'David Edstrom':2026,'Yegor Surin':2027,'Teddy Stiga':2027,'Brady Martin':2028,'Cameron Reid':2028,'Ryker Lee':2028};
+const luFarm=FARM.map(p=>({id:'farm_'+p.name.replace(/\W/g,''),n:p.name.split(' ').slice(-1)[0],full:p.name,pos:p.pos,cap:0.9,end:2099,age:p.age,eta:FARM_ETA[p.name]||2027,prospect:true}));
+
+// lineup state per year: which player id sits in each slot. Start auto-filled, then user can drag.
+const SLOTS={F:['L1L','L1C','L1R','L2L','L2C','L2R','L3L','L3C','L3R','L4L','L4C','L4R'],
+  D:['D1L','D1R','D2L','D2R','D3L','D3R'],G:['G1','G2']};
+let luPlacement={}; // { year: { slotId: playerId } }
+
+function luAvailable(year){
+  // players whose contract hasn't ended + prospects who've reached ETA
+  const r=luRoster.filter(p=>p.end>=year);
+  const f=luFarm.filter(p=>p.eta<=year);
+  return [...r,...f];
+}
+function luAutoFill(year){
+  const avail=luAvailable(year);const place={};
+  const byPos={LW:[],C:[],RW:[],D:[],G:[]};
+  avail.forEach(p=>{(byPos[p.pos]=byPos[p.pos]||[]).push(p);});
+  // sort each by cap desc (proxy for quality) so vets top lines, prospects lower
+  Object.values(byPos).forEach(arr=>arr.sort((a,b)=>b.cap-a.cap));
+  const take=(pos)=>byPos[pos]&&byPos[pos].length?byPos[pos].shift().id:null;
+  // forwards: fill L,C,R per line
+  ['L1','L2','L3','L4'].forEach(l=>{place[l+'L']=take('LW')||take('C');place[l+'C']=take('C')||take('LW');place[l+'R']=take('RW')||take('C');});
+  ['D1','D2','D3'].forEach(d=>{place[d+'L']=take('D');place[d+'R']=take('D');});
+  place['G1']=take('G');place['G2']=take('G');
+  return place;
+}
+function luGetPlace(year){if(!luPlacement[year])luPlacement[year]=luAutoFill(year);return luPlacement[year];}
+function luPlayer(id){return [...luRoster,...luFarm].find(p=>p.id===id);}
+
+function renderYearTabs(){
+  document.getElementById('yearTabs').innerHTML=LU_YEARS.map(y=>`
+    <button class="chip luyear ${y===luYear?'on':''}" data-y="${y}">${y}-${(y+1)%100}</button>`).join('');
+  document.querySelectorAll('.luyear').forEach(b=>b.addEventListener('click',()=>{luYear=+b.dataset.y;renderLineup();}));
+}
+function slotHTML(slotId,label){
+  const place=luGetPlace(luYear);const pid=place[slotId];const p=pid?luPlayer(pid):null;
+  const cap=p?(p.prospect?'ELC $0.9M':'$'+p.cap.toFixed(2)+'M'):'—';
+  const tag=p?(p.prospect?'prospect':'roster'):'open';
+  return `<div class="slot ${p?(p.prospect?'prospect':''):'slot-open'}" data-slot="${slotId}" ${p?'draggable="true"':''} data-pid="${pid||''}">
+    <div class="sn">${p?(p.full||p.n):'<span style="color:var(--muted)">open</span>'}${p?`<span class="pos">${p.pos}</span>`:''}</div>
+    <div class="sm"><span>${tag}</span><b>${cap}</b></div></div>`;
+}
+function renderLineup(){
+  renderYearTabs();
+  const lt=['L1','L2','L3','L4'];
+  document.getElementById('fwdLines').innerHTML=lt.map((l,i)=>`
+    <div class="line-row"><div class="line-tag ${i?'l'+(i+1):''}">${l}</div>
+    ${['L','C','R'].map(s=>slotHTML(l+s)).join('')}</div>`).join('');
+  document.getElementById('dPairs').innerHTML=['D1','D2','D3'].map((d,i)=>`
+    <div class="line-row" style="grid-template-columns:42px 1fr 1fr"><div class="line-tag ${i?'l'+(i+2):''}">${d}</div>
+    ${['L','R'].map(s=>slotHTML(d+s)).join('')}</div>`).join('');
+  document.getElementById('goalies').innerHTML=['G1','G2'].map((g,i)=>`
+    <div style="margin-bottom:10px">${slotHTML(g)}</div>`).join('');
+  // bench pool: available players not currently placed
+  const place=luGetPlace(luYear);const placed=new Set(Object.values(place).filter(Boolean));
+  const bench=luAvailable(luYear).filter(p=>!placed.has(p.id));
+  document.getElementById('poolBench').innerHTML=bench.length?
+    `<div style="display:flex;flex-wrap:wrap;gap:8px">${bench.map(p=>`
+      <div class="slot ${p.prospect?'prospect':''}" draggable="true" data-pid="${p.id}" data-slot="bench" style="min-width:150px">
+        <div class="sn">${p.full||p.n}<span class="pos">${p.pos}</span></div>
+        <div class="sm"><span>${p.prospect?'prospect':'roster'}</span><b>${p.prospect?'ELC':'$'+p.cap.toFixed(1)+'M'}</b></div></div>`).join('')}</div>`
+    :'<div style="color:var(--muted);font-family:var(--mono);font-size:12px">Everyone available is in the lineup</div>';
+  // KPIs
+  const lineupPids=Object.values(place).filter(Boolean);
+  const lineupPlayers=lineupPids.map(luPlayer).filter(Boolean);
+  const capTotal=lineupPlayers.reduce((s,p)=>s+(p.prospect?0.9:p.cap),0);
+  const ceil={2026:103.5,2027:113.5,2028:122,2029:131,2030:139}[luYear];
+  document.getElementById('luCap').textContent='$'+capTotal.toFixed(1)+'M';
+  document.getElementById('luCeil').textContent=`of $${ceil}M ceiling`;
+  document.getElementById('luPros').textContent=lineupPlayers.filter(p=>p.prospect).length;
+  const avgAge=lineupPlayers.length?(lineupPlayers.reduce((s,p)=>s+(p.age+(luYear-2026)),0)/lineupPlayers.length):0;
+  document.getElementById('luAge').textContent=avgAge.toFixed(1);
+  document.getElementById('luAgeD').textContent=luYear>2026?'aging forward from 2026':'current';
+  const totalSlots=12+6+2;
+  document.getElementById('luOpen').textContent=totalSlots-lineupPids.length;
+  bindLuDrag();
+  if(typeof bindInfos==='function')bindInfos();
+}
+// drag and drop
+let luDragPid=null,luDragFrom=null;
+function bindLuDrag(){
+  document.querySelectorAll('#view-lineup .slot[draggable="true"]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{luDragPid=el.dataset.pid;luDragFrom=el.dataset.slot;el.classList.add('dragging');});
+    el.addEventListener('dragend',()=>{el.classList.remove('dragging');document.querySelectorAll('#view-lineup .slot').forEach(s=>s.classList.remove('over'));});
+  });
+  document.querySelectorAll('#view-lineup .slot[data-slot]').forEach(el=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over');});
+    el.addEventListener('dragleave',()=>el.classList.remove('over'));
+    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('over');
+      const toSlot=el.dataset.slot;if(toSlot==='bench'){ // drop to bench = remove from lineup
+        if(luDragFrom&&luDragFrom!=='bench')luGetPlace(luYear)[luDragFrom]=null;renderLineup();return;}
+      const place=luGetPlace(luYear);const displaced=place[toSlot];
+      place[toSlot]=luDragPid;
+      if(luDragFrom&&luDragFrom!=='bench')place[luDragFrom]=displaced||null; // swap
+      renderLineup();
+    });
+  });
+}
+
+/* ===== 08 AI ARCHITECT ===== */
+const presets={
+  offload:"Identify the single contract most worth moving this offseason and what we should target in return, given our draft-first direction and the #10 pick.",
+  draft:"We want to maximize draft capital over the next two years without gutting the NHL roster. Which veterans are the most realistic trade chips, and what return should we expect?",
+  window:"Assess whether this core can realistically contend within 3 years, or whether we should commit to a retool. Be direct about the anchor contracts."
+};
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.getElementById('aiPrompt').value=presets[b.dataset.p];}));
+function rosterContext(){
+  const lines=roster.map(p=>`${p.name} (${p.pos}, age ${p.age}): $${p.hit}M, ${p.yrs}y left, value ${p.prod}, surplus ${p.surplus>0?'+':''}${p.surplus}M`).join('\n');
+  return `2026-27 cap ceiling: $103.5M. Predators core:\n${lines}\n\nContext: New GM Chris MacFarland (ex-Colorado), draft-first, holds #10 in 2026. Missed playoffs (38-32-10). The 2024 UFA class (Stamkos, Marchessault, Skjei) underperforms its cap hit.`;
+}
+document.getElementById('aiRun').addEventListener('click',async()=>{
+  const btn=document.getElementById('aiRun'),out=document.getElementById('aiOut');
+  const q=document.getElementById('aiPrompt').value.trim();if(!q)return;
+  btn.disabled=true;btn.style.opacity=.5;
+  out.className='card-b ai-out';out.innerHTML='<div class="blink" style="font-size:13px;color:var(--slate)">Claude is analyzing the cap ledger</div>';
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,
+        messages:[{role:"user",content:`You are a senior hockey analytics advisor to the Nashville Predators front office. Use the data to answer concisely and decisively. Format with short <h3> headers, <p>, and <ul><li> only. Name specific players and figures. End with one clear recommendation.\n\n=== DATA ===\n${rosterContext()}\n\n=== DIRECTIVE ===\n${q}`}]})});
+    const data=await res.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    out.innerHTML=text.replace(/```html|```/g,'').trim();
+  }catch(err){out.innerHTML=`<div style="color:var(--red);font-size:13px;line-height:1.6"><strong>Couldn't reach the model.</strong><br>${err.message}<br><br>This module runs live inside Claude's artifact environment.</div>`;}
+  finally{btn.disabled=false;btn.style.opacity=1;}
+});
+
+/* ===== 09 MOCK DRAFT ENGINE ===== */
+/* Real 2026 NHL Draft prospects (consensus board, rounds 1-3).
+   Names/positions/leagues are real per public consensus rankings (DPH, HockeyMockDraft, NHL Central Scouting).
+   Attributes are MODELED (no public granular tracking data exists), derived deterministically from rank + position archetype. */
+const REAL=[
+  ["Gavin McKenna","LW","NCAA",71,"L"],["Ivar Stenberg","LW","SHL",73,"L"],["Keaton Verhoeff","D","NCAA",75,"R"],
+  ["Chase Reid","D","OHL",74,"R"],["Alberts Smits","D","Liiga",74,"L"],["Caleb Malhotra","C","OHL",73,"R"],
+  ["Carson Carels","D","WHL",73,"L"],["Tynan Lawrence","C","NCAA",72,"R"],["Ethan Belchetz","LW","OHL",76,"L"],
+  ["Viggo Björck","C","SHL",70,"R"],["Daxon Rudolph","D","WHL",74,"R"],["Ilya Morozov","C","NCAA",72,"L"],
+  ["Ryan Lin","D","WHL",71,"R"],["Oliver Suvanto","C","Liiga",72,"L"],["JP Hurlbert","LW","WHL",73,"L"],
+  ["Adam Novotný","LW","OHL",73,"R"],["Xavier Villeneuve","D","QMJHL",70,"L"],["Oscar Hemming","LW","NCAA",73,"L"],
+  ["Malte Gustafsson","D","SHL",74,"L"],["Elton Hermansson","RW","Allsv",73,"R"],["Juho Piiparinen","D","Liiga",75,"R"],
+  ["Marcus Nordmark","RW","U20",72,"R"],["Nikita Klepov","LW","OHL",73,"L"],["Yegor Shilov","C","QMJHL",71,"L"],
+  ["Brooks Rogowski","C","OHL",74,"L"],["Mathis Preston","C","WHL",71,"R"],["Maddox Dagenais","C","QMJHL",72,"L"],
+  ["Ryan Roobroeck","C","OHL",74,"L"],["Alexander Command","C","SHL",72,"R"],["William Håkansson","D","SHL",75,"L"],
+  ["Liam Ruck","C","WHL",72,"L"],["Markus Ruck","C","WHL",72,"R"],
+  // rounds 2-3 (real names from extended consensus lists)
+  ["Wyatt Cullen","C","WHL",71,"L"],["Adam Valentini","C","NCAA",72,"L"],["Giorgos Pantellas","D","OHL",74,"R"],
+  ["J.P. Hurlbert","LW","WHL",73,"L"],["Måns Josbrant","LW","J20",73,"L"],["Dayne Beuker","C","USA U18",72,"R"],
+  ["Max Laatikainen","D","Jr",75,"L"],["Gleb Maslov","RW","MHL",72,"R"],["Charlie Trethewey","D","USNTDP",75,"R"],
+  ["Cole McKinney","C","USNTDP",72,"L"],["Mads Kongsbak","D","Denmark",74,"L"],["Tomas Galvas","D","Czechia",70,"L"],
+  ["Topias Hynninen","RW","Liiga",72,"L"],["Eddie Genborg","LW","SHL",74,"L"],["Lukas Sawchyn","C","WHL",71,"L"],
+  ["Beckham Edwards","LW","OHL",72,"L"],["Tomáš Pobežal","C","Slovakia",71,"R"],["Henry Mews","D","OHL",73,"R"],
+  ["Sam Laurila","D","USNTDP",74,"L"],["Vojtech Cihar","LW","Czechia",72,"L"],["Pierce Mbuyi","LW","OHL",71,"L"],
+  ["Jacob Rombach","D","USHL",77,"L"],["Brady Turko","RW","WHL",73,"R"],["Owen Conrad","D","QMJHL",75,"L"],
+  ["Vidar Hörnqvist","C","J20",73,"L"],["Roman Bausov","D","MHL",74,"L"],["Carlas Robergs","RW","WHL",73,"R"],
+  ["Lasse Boelius","D","Liiga",73,"L"],["Filip Ekberg","LW","OHL",71,"L"],["Conrad Fondrk","C","USNTDP",72,"R"],
+  ["Mark Zwerger","C","Austria",71,"R"],["Cooper Williams","C","USHL",71,"L"],["Daniil Traktor","RW","MHL",73,"R"],
+  ["Egor Borikov","D","MHL",74,"L"],["Maddox Schultz","RW","WHL",70,"R"],["Théo Bélanger","C","QMJHL",72,"L"],
+  ["Noah Read","LW","OHL",72,"L"],["Will Reynolds","D","QMJHL",74,"L"],["Ondrej Becher","C","WHL",72,"R"],
+  ["Lukas Fischer","D","OHL",75,"L"],["Hayden Paupanekis","C","WHL",75,"L"],["Caleb Gauthier","RW","QMJHL",73,"R"],
+  ["Sirius Sjöblom","C","J20",72,"L"],["Mathias Onuska","G","WHL",74,"L"],["Petteri Kallio","G","Liiga",75,"L"],
+  ["Lucas Beckman","G","QMJHL",73,"L"],["Émile Guité","LW","NCAA",71,"L"],["Tynan McCarthy","D","USHL",73,"R"],
+  ["Brandon Gorzynski","C","WHL",72,"L"],["Aiden Cardwell","D","OHL",75,"L"],["Nathan Amidovski","C","OHL",70,"R"],
+  ["Viktor Klingsell","LW","J20",71,"L"],["Stepan Hozak","C","Slovakia",72,"L"],["Maxim Agafonov","D","MHL",75,"R"],
+  ["Reggie Newman","D","USHL",74,"L"],["Ryan Calvani","RW","USHL",72,"R"],["Cullen Potter","C","NCAA",70,"L"],
+  ["Jack Murtagh","LW","NCAA",73,"L"],["Bruno Idzan","LW","USHL",73,"L"],["Linus Eriksson","C","J20",72,"L"],
+  ["Tomas Hamara Jr","D","OHL",73,"L"],["Felix Färkkilä","RW","Liiga",75,"R"]
+];
+// deterministic attribute model from rank + position
+const archDef={
+  C:{forecheck:78,pace:80,compete:80,dResp:62,off:80,sho:74,trans:80},
+  LW:{forecheck:78,pace:80,compete:74,dResp:56,off:82,sho:78,trans:76},
+  RW:{forecheck:80,pace:78,compete:80,dResp:58,off:80,sho:80,trans:74},
+  D:{forecheck:60,pace:70,compete:80,dResp:84,off:60,sho:64,trans:74},
+  G:{forecheck:0,pace:60,compete:84,dResp:82,off:0,sho:0,trans:0}
+};
+let _s=20260626; const _r=()=>{_s=(_s*1103515245+12345)&0x7fffffff;return _s/0x7fffffff;};
+const PROS=REAL.map((row,i)=>{
+  const [name,pos,league,ht,hand]=row;const rank=i+1;
+  const base=archDef[pos];
+  // top prospects sit near archetype peak; talent tapers with rank
+  const taper=Math.min(26,rank*0.32);
+  const jit=()=>(_r()*10-5);
+  const mk=v=>v===0?0:Math.max(38,Math.min(97,Math.round(v - taper + jit())));
+  return {id:rank,name,pos,league,hand,ht,rank,
+    forecheck:mk(base.forecheck),pace:mk(base.pace),compete:mk(base.compete),dResp:mk(base.dResp),
+    off:mk(base.off),sho:mk(base.sho),trans:mk(base.trans),grade:0,notes:''};
+});
+// fill rounds 4-7 (real-deep names aren't publicly profiled; generated, flagged as projected late-round)
+(function(){
+  const fn=["Aleksi","Owen","Liam","Noah","Émile","Viktor","Jonas","Matteo","Tuukka","Carl","Dmitri","Felix","Ryan","Theo","Anton","Lucas","Henrik","Cole","Maxim","Erik","Samuel","Niko","Brady","Oscar","Linus","Jakob","Pavel","Charlie","Adam","Elias"];
+  const ln=["Lehtonen","Halloran","Söderberg","Marchand","Petrov","Nyström","Boucher","Vance","Korhonen","Lund","Kane","Riedel","Whitlock","Aalto","Sorokin","Berg","Mäki","Donovan","Volkov","Strand","Pérez","Holt","Rinne","Falk","Dahl","Novák","Ivanov","Reilly","Brandt","Sundqvist"];
+  const poss=["C","LW","RW","D","D","C","D","G"];
+  let id=PROS.length;const used=new Set(PROS.map(p=>p.name));
+  while(PROS.length<224){
+    id++;const rank=id;const pos=poss[id%poss.length];const base=archDef[pos];
+    let fnm,guard=0;do{fnm=fn[Math.floor(_r()*fn.length)]+" "+ln[Math.floor(_r()*ln.length)];guard++;}while(used.has(fnm)&&guard<60);
+    used.add(fnm);
+    const taper=Math.min(40,rank*0.33);const jit=()=>(_r()*9-4);
+    const mk=v=>v===0?0:Math.max(34,Math.min(88,Math.round(v-taper+jit())));
+    PROS.push({id,name:fnm,pos,league:["WHL","OHL","QMJHL","USHL","Liiga","SHL","MHL","NCAA"][id%8],
+      hand:_r()>0.62?"R":"L",ht:69+Math.floor(_r()*8),rank,
+      forecheck:mk(base.forecheck),pace:mk(base.pace),compete:mk(base.compete),dResp:mk(base.dResp),
+      off:mk(base.off),sho:mk(base.sho),trans:mk(base.trans),grade:0,notes:'',late:true});
+  }
+})();
+
+// Smashville Way: 3 pillars, each with sub-traits & weights (0-100, normalized)
+const WAY={
+  identity:{label:"Team Identity",pct:40,traits:{forecheck:60,pace:25,compete:15}},
+  value:{label:"Cap / Age-Curve Value",pct:30,traits:{trans:50,off:30,sho:20}},
+  need:{label:"Positional Need",pct:30,traits:{C:90,D:80,RW:60,LW:55,G:40}}
+};
+// positional need defaults (Preds thin at C and RHD)
+function fitPct(p){
+  // identity sub-score
+  const id=(p.forecheck*WAY.identity.traits.forecheck+p.pace*WAY.identity.traits.pace+p.compete*WAY.identity.traits.compete)/
+    (WAY.identity.traits.forecheck+WAY.identity.traits.pace+WAY.identity.traits.compete);
+  const val=(p.trans*WAY.value.traits.trans+p.off*WAY.value.traits.off+p.sho*WAY.value.traits.sho)/
+    (WAY.value.traits.trans+WAY.value.traits.off+WAY.value.traits.sho);
+  const need=WAY.need.traits[p.pos]||50;
+  const tot=WAY.identity.pct+WAY.value.pct+WAY.need.pct||1;
+  let fit=(id*WAY.identity.pct+val*WAY.value.pct+need*WAY.need.pct)/tot;
+  // scout grade nudge
+  if(document.getElementById('useGrade')?.checked && p.grade){fit=fit*0.85+(p.grade/5*100)*0.15;}
+  return Math.round(Math.max(0,Math.min(99,fit)));
+}
+// Available% at #10: logistic on consensus rank vs pick 10
+function availPct(p){const x=(p.rank-10);return Math.round(100/(1+Math.exp(-x*0.85)));}
+function valueFlag(p){const d=p.rank-10;return d<=-3?['Reach','red']:d>=4?['Steal','green']:['Fair','navy'];}
+
+let selProspect=PROS[0].id;
+
+/* ---- render the Way definer ---- */
+function renderWay(){
+  const total=WAY.identity.pct+WAY.value.pct+WAY.need.pct;
+  document.getElementById('wayHint').textContent=`pillars sum to ${total}% (auto-normalized)`;
+  document.getElementById('wayPillars').innerHTML=Object.entries(WAY).map(([k,pil])=>{
+    const traitRows=k==='need'
+      ? Object.entries(pil.traits).map(([t,v])=>`<div class="way-row"><div class="wtop"><span>${t} need</span><b>${v}</b></div><input type="range" min="0" max="100" value="${v}" data-pil="${k}" data-tr="${t}" class="attr-slider waytrait" style="width:100%"></div>`).join('')
+      : Object.entries(pil.traits).map(([t,v])=>`<div class="way-row"><div class="wtop"><span>${t}</span><b>${v}</b></div><input type="range" min="0" max="100" value="${v}" data-pil="${k}" data-tr="${t}" class="attr-slider waytrait" style="width:100%"></div>`).join('');
+    return `<div>
+      <div class="pillar-h">${pil.label}<span class="pillar-pct">${Math.round(pil.pct/total*100)}%</span></div>
+      <input type="range" min="0" max="100" value="${pil.pct}" data-pilw="${k}" class="attr-slider waypil" style="width:100%;margin-bottom:10px">
+      <div style="border-top:1px solid var(--line-soft);padding-top:8px">${traitRows}</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.waypil').forEach(s=>s.addEventListener('input',e=>{WAY[e.target.dataset.pilw].pct=+e.target.value;renderWay();renderBoard();renderSuggestions();if(typeof renderDisagreement==='function')renderDisagreement();}));
+  document.querySelectorAll('.waytrait').forEach(s=>s.addEventListener('input',e=>{
+    WAY[e.target.dataset.pil].traits[e.target.dataset.tr]=+e.target.value;
+    e.target.previousElementSibling.querySelector('b').textContent=e.target.value;
+    renderBoard();renderSuggestions();}));
+}
+const wayPresets={
+  balanced:{i:34,v:33,n:33,fc:50,pc:30,cp:20},
+  identity:{i:55,v:25,n:20,fc:75,pc:15,cp:10},
+  value:{i:25,v:55,n:20,fc:40,pc:30,cp:30},
+  need:{i:25,v:25,n:50,fc:50,pc:30,cp:20}
+};
+document.querySelectorAll('.waypreset').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.waypreset').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const w=wayPresets[b.dataset.w];WAY.identity.pct=w.i;WAY.value.pct=w.v;WAY.need.pct=w.n;
+  WAY.identity.traits={forecheck:w.fc,pace:w.pc,compete:w.cp};
+  renderWay();renderBoard();renderSuggestions();}));
+document.getElementById('useGrade').addEventListener('change',()=>{renderBoard();renderSuggestions();});
+
+/* ---- filters ---- */
+const OUR_PICK=10;
+// populate league dropdown
+(function(){const leagues=[...new Set(PROS.map(p=>p.league))].sort();
+  document.getElementById('qLeague').insertAdjacentHTML('beforeend',leagues.map(l=>`<option>${l}</option>`).join(''));})();
+function queryPool(){
+  const pos=document.getElementById('qPos').value, hand=document.getElementById('qHand').value,
+    league=document.getElementById('qLeague').value, ht=+document.getElementById('qHt').value,
+    minFit=+document.getElementById('qFit').value, minTr=+document.getElementById('qTrans').value,
+    minComp=+document.getElementById('qComp').value, round=+document.getElementById('qRound').value,
+    availOnly=document.getElementById('qAvail').checked, sort=document.getElementById('qSort').value,
+    search=document.getElementById('qSearch').value.trim().toLowerCase();
+  const inRound=p=>!round||(round===1&&p.rank<=32)||(round===2&&p.rank>32&&p.rank<=64)||(round===3&&p.rank>64);
+  let rows=PROS.filter(p=>(!pos||p.pos===pos)&&(!hand||p.hand===hand)&&(!league||p.league===league)&&
+    p.ht>=ht&&fitPct(p)>=minFit&&(p.trans>=minTr)&&(p.compete>=minComp)&&inRound(p)&&
+    (!availOnly||availPct(p)>=55)&&(!search||p.name.toLowerCase().includes(search)));
+  const sorters={fit:(a,b)=>fitPct(b)-fitPct(a),avail:(a,b)=>availPct(b)-availPct(a),rank:(a,b)=>a.rank-b.rank,value:(a,b)=>(b.rank-OUR_PICK)-(a.rank-OUR_PICK)};
+  rows.sort(sorters[sort]);
+  document.getElementById('qCount').textContent=`${rows.length} of ${PROS.length} prospects`;
+  return rows;
+}
+['qPos','qHand','qLeague','qHt','qFit','qTrans','qComp','qRound','qSort'].forEach(id=>document.getElementById(id).addEventListener('change',renderBoard));
+document.getElementById('qAvail').addEventListener('change',renderBoard);
+document.getElementById('qSearch').addEventListener('input',renderBoard);
+document.getElementById('qClear').addEventListener('click',()=>{
+  ['qPos','qHand','qLeague'].forEach(id=>document.getElementById(id).value='');
+  ['qHt','qFit','qTrans','qComp','qRound'].forEach(id=>document.getElementById(id).value='0');
+  document.getElementById('qSort').value='rank';document.getElementById('qAvail').checked=false;
+  document.getElementById('qSearch').value='';renderBoard();});
+
+/* ---- board ---- */
+let boardKey='rank',boardDir=1;
+function renderBoard(){
+  const rows=queryPool();
+  const tb=document.querySelector('#boardTable tbody');
+  const flagPill={red:'red',green:'green',navy:'navy'};
+  const sorted=[...rows];
+  if(boardKey!=='rank'){sorted.sort((a,b)=>{
+    const f={avail:availPct,fit:fitPct,grade:p=>p.grade,name:p=>p.name,flag:p=>valueFlag(p)[0]};
+    let va=f[boardKey](a),vb=f[boardKey](b);
+    if(typeof va==='string')return va.localeCompare(vb)*boardDir;return (va-vb)*boardDir;});}
+  tb.innerHTML=sorted.slice(0,80).map(p=>{const fl=valueFlag(p),fit=fitPct(p),av=availPct(p);
+    return `<tr data-id="${p.id}" style="cursor:pointer">
+      <td>${p.rank}</td>
+      <td class="tl">${p.name}<span class="pos">${p.pos}</span>${p.late?' <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">proj</span>':''}</td>
+      <td><span class="bar-cell"><span class="mini"><i style="width:${av}%;background:var(--blue)"></i></span>${av}</span></td>
+      <td><span class="bar-cell"><span class="mini"><i style="width:${fit}%;background:var(--gold)"></i></span><b style="color:var(--ink)">${fit}</b></span></td>
+      <td>${p.grade?'★'.repeat(p.grade):'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="text-align:right"><span class="pill ${flagPill[fl[1]]}">${fl[0]}</span></td>
+    </tr>`;}).join('');
+  tb.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>{selProspect=+tr.dataset.id;renderScout();}));
+  document.getElementById('boardHint').textContent=`${rows.length} match${rows.length>80?' · showing top 80':''} · click a row for scout card`;
+  const bs=document.getElementById('boardSnap');
+  if(bs&&!bs.dataset.bound){bs.dataset.bound='1';bs.addEventListener('click',()=>exportSnapshot(document.getElementById('boardTable').closest('.card'),'draft_board'));}
+}
+document.querySelectorAll('#boardTable th').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.c;if(k===boardKey)boardDir*=-1;else{boardKey=k;boardDir=th.dataset.t==='s'?1:(k==='rank'?1:-1);}
+  document.querySelectorAll('#boardTable th').forEach(x=>x.classList.remove('sorted'));th.classList.add('sorted');
+  renderBoard();}));
+
+/* ---- suggestions ---- */
+function renderSuggestions(){
+  const avail=PROS.filter(p=>availPct(p)>=55);
+  const byFit=[...PROS].sort((a,b)=>fitPct(b)-fitPct(a));
+  const bestAtTen=[...avail].sort((a,b)=>fitPct(b)-fitPct(a))[0]||byFit[0];
+  document.getElementById('recoName').textContent=bestAtTen.name;
+  document.getElementById('recoWhy').textContent=`${bestAtTen.pos} · Fit ${fitPct(bestAtTen)}% · ${availPct(bestAtTen)}% available · best fit on the likely board`;
+  document.getElementById('depthV').textContent=avail.filter(p=>fitPct(p)>=70).length;
+  const steal=[...PROS].sort((a,b)=>(b.rank-10)-(a.rank-10)).filter(p=>fitPct(p)>=68)[0];
+  document.getElementById('valueV').textContent=steal?steal.name.split(' ').pop():'—';
+  document.getElementById('valueD').textContent=steal?`ranked #${steal.rank}, fits ${fitPct(steal)}% — value at 10`:'—';
+}
+
+/* ---- scout card with grade ---- */
+function renderScout(){
+  const p=PROS.find(x=>x.id===selProspect);
+  document.getElementById('scName').textContent=p.name;
+  const fit=fitPct(p),av=availPct(p),fl=valueFlag(p);
+  document.getElementById('scoutCard').innerHTML=`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+      <span class="pill ${fl[1]==='red'?'red':fl[1]==='green'?'green':'navy'}">${fl[0]}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">consensus #${p.rank}</span>
+      <button id="ddBtn" style="margin-left:auto;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;border:1px solid var(--navy);background:var(--navy);color:#fff;font-family:var(--body);font-size:12px;font-weight:600;cursor:pointer">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Deep-dive</button>
+      <button id="snapBtn" title="Export as image" style="display:flex;align-items:center;gap:5px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--slate);font-family:var(--body);font-size:12px;font-weight:600;cursor:pointer">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 5V3h8v2M9 14l3-3 3 3"/></svg></button></div>
+    <div class="scrow"><span>Position</span><b>${p.pos} · ${p.hand} · ${Math.floor(p.ht/12)}'${p.ht%12}"</b></div>
+    <div class="scrow"><span>Available at #10</span><b>${av}%</b></div>
+    <div class="scrow"><span>Smashville Fit</span><b style="color:var(--gold-deep)">${fit}%</b></div>
+    <div class="scrow"><span>Forecheck / Pace / Compete</span><b>${p.forecheck} / ${p.pace} / ${p.compete}</b></div>
+    <div class="scrow" style="border:none"><span>Transition / Off / Shot</span><b>${p.trans} / ${p.off} / ${p.sho}</b></div>
+    <div style="margin-top:16px;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px">Scout grade (feeds Fit%)</div>
+    <div id="grader" style="display:flex;gap:4px;margin-bottom:14px">
+      ${[1,2,3,4,5].map(n=>`<span class="grade-star ${p.grade>=n?'on':''}" data-n="${n}">★</span>`).join('')}</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px">Scout notes</div>
+    <textarea id="scNotes" rows="4" placeholder="Viewings, projection, character, injury flags…" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-family:var(--body);font-size:13px;padding:10px;resize:vertical;line-height:1.5">${p.notes.replace(/</g,'&lt;')}</textarea>`;
+  document.querySelectorAll('#grader .grade-star').forEach(st=>st.addEventListener('click',()=>{
+    const n=+st.dataset.n;p.grade=(p.grade===n?0:n);renderScout();renderBoard();renderSuggestions();}));
+  document.getElementById('scNotes').addEventListener('input',e=>{p.notes=e.target.value;});
+  document.getElementById('ddBtn').addEventListener('click',()=>deepDive(p.id));
+  const snap=document.getElementById('snapBtn');
+  if(snap)snap.addEventListener('click',()=>exportSnapshot(document.getElementById('scoutCard').closest('.card'),'scout_'+p.name.replace(/\W/g,'_')));
+}
+
+/* ---- MONTE CARLO: who's available at our pick (#10) ---- */
+function runMonteCarlo(){
+  const N=1000, PICK=10; // sims, our overall pick (1-indexed)
+  const needsByPick=DRAFT_ORDER.slice(0,PICK-1); // 9 teams ahead of us
+  const counts={};PROS.forEach(p=>counts[p.id]=0);
+  let _m=99991;const mr=()=>{_m=(_m*1103515245+12345)&0x7fffffff;return _m/0x7fffffff;};
+  for(let sim=0;sim<N;sim++){
+    const taken=new Set();
+    needsByPick.forEach(team=>{
+      const needs=TEAM_NEEDS[team]||{};
+      const pool=PROS.filter(p=>!taken.has(p.id)).sort((a,b)=>a.rank-b.rank).slice(0,7);
+      const scored=pool.map(p=>({p,sc:(100-p.rank*0.4)*(needs[p.pos]||1)*(0.8+mr()*0.4)}));
+      scored.sort((a,b)=>b.sc-a.sc);
+      if(scored[0])taken.add(scored[0].p.id);
+    });
+    // everyone not taken is "available at 10"
+    PROS.forEach(p=>{if(!taken.has(p.id))counts[p.id]++;});
+  }
+  // show the interesting band: players who are sometimes-but-not-always available, around our range
+  const ranked=PROS.filter(p=>p.rank<=20).map(p=>({p,prob:Math.round(counts[p.id]/N*100)}))
+    .sort((a,b)=>a.p.rank-b.p.rank);
+  const el=document.getElementById('mcResult');
+  el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Probability still on the board at #${PICK}</div>`+
+    ranked.map(({p,prob})=>{
+      const col=prob>=70?'var(--green)':prob>=30?'var(--gold)':'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:26px">#${p.rank}</span>
+        <span style="font-size:12.5px;color:var(--ink);min-width:120px;font-weight:500">${p.name}</span>
+        <span class="pos">${p.pos}</span>
+        <div class="mini" style="flex:1;height:9px"><i style="width:${prob}%;background:${col}"></i></div>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${col};min-width:38px;text-align:right">${prob}%</span>
+      </div>`;}).join('');
+}
+document.getElementById('mcRun').addEventListener('click',runMonteCarlo);
+
+/* ---- DISAGREEMENT FINDER: model rank vs consensus ---- */
+function renderDisagreement(){
+  // model rank = sort by expected value (modelRead); compare to consensus rank
+  const withModel=PROS.slice(0,64).map(p=>({p,exp:modelRead(p).exp}));
+  withModel.sort((a,b)=>b.exp-a.exp);
+  withModel.forEach((w,i)=>w.modelRank=i+1);
+  const gaps=withModel.map(w=>({...w,gap:w.p.rank-w.modelRank})) // +ve = model likes more than consensus
+    .sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap)).slice(0,8);
+  document.getElementById('disagree').innerHTML=gaps.map(({p,modelRank,gap})=>{
+    const up=gap>0;const col=up?'var(--green)':'var(--red)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)">
+      <div style="flex:1"><span style="font-size:13px;font-weight:600;color:var(--ink)">${p.name}</span><span class="pos">${p.pos}</span></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">consensus #${p.rank} → model #${modelRank}</span>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${col};min-width:42px;text-align:right">${up?'▲':'▼'}${Math.abs(gap)}</span>
+    </div>`;}).join('');
+}
+
+renderWay();renderBoard();renderSuggestions();renderScout();
+
+/* ---- wire prospect -> Scouting Tree workbench ---- */
+function prospectToAttrs(p){
+  // map mock-draft traits -> workbench [Offense,Defense,Transition,Shot,Physical,IQ]
+  return [p.off||60, p.dResp, p.trans||60, p.sho||60,
+    Math.round((p.compete*0.6+ (p.ht-70)*4)), // physical from compete + frame
+    Math.round((p.pace*0.5+p.compete*0.5))];   // IQ proxy
+}
+function deepDive(pid){
+  const p=PROS.find(x=>x.id===pid);
+  const id='mock'+p.id;
+  let t=TARGETS.find(x=>x.id===id);
+  if(!t){t={id,name:p.name,label:`From board · ${p.pos} · #${p.rank}`,type:'prospect',metrics:{},attrs:prospectToAttrs(p)};TARGETS.push(t);}
+  else{t.attrs=prospectToAttrs(p);}
+  curType='prospect';curId=id;
+  // sync type toggle UI
+  document.querySelectorAll('#typeToggle .chip').forEach(x=>x.classList.toggle('on',x.dataset.ty==='prospect'));
+  renderAll();
+  // navigate to tree
+  document.querySelector('.nav-item[data-v="tree"]').click();
+}
+
+/* ---- big board (drag to rank) ---- */
+let bigBoardOrder=[...PROS].sort((a,b)=>a.rank-b.rank).slice(0,16).map(p=>p.id);
+function renderBigBoard(){
+  const el=document.getElementById('bigBoard');
+  el.innerHTML=bigBoardOrder.map((pid,i)=>{
+    const p=PROS.find(x=>x.id===pid);const myRank=i+1;const delta=p.rank-myRank;
+    const cls=delta>0?'up':delta<0?'down':'even';
+    const sign=delta>0?'+'+delta:delta<0?delta:'±0';
+    return `<div class="bb-row" draggable="true" data-id="${pid}">
+      <div class="bb-rank">${myRank}</div>
+      <div class="bb-grip">⠿</div>
+      <div><div class="bb-name">${p.name}<span class="pos">${p.pos}</span></div>
+        <div class="bb-fit">Fit ${fitPct(p)}% · ${availPct(p)}% avail · consensus #${p.rank}</div></div>
+      <div class="bb-delta ${cls}">${sign}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">vs board</div>
+    </div>`;
+  }).join('');
+  let dragId=null;
+  el.querySelectorAll('.bb-row').forEach(row=>{
+    row.addEventListener('dragstart',()=>{dragId=+row.dataset.id;row.classList.add('dragging');});
+    row.addEventListener('dragend',()=>{row.classList.remove('dragging');el.querySelectorAll('.bb-row').forEach(r=>r.classList.remove('over'));});
+    row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('over');});
+    row.addEventListener('dragleave',()=>row.classList.remove('over'));
+    row.addEventListener('drop',e=>{e.preventDefault();const targetId=+row.dataset.id;
+      if(dragId===targetId)return;
+      const from=bigBoardOrder.indexOf(dragId),to=bigBoardOrder.indexOf(targetId);
+      bigBoardOrder.splice(from,1);bigBoardOrder.splice(to,0,dragId);
+      renderBigBoard();});
+  });
+}
+document.getElementById('bbReset').addEventListener('click',()=>{
+  bigBoardOrder=[...PROS].sort((a,b)=>a.rank-b.rank).slice(0,16).map(p=>p.id);renderBigBoard();});
+renderBigBoard();
+
+/* ===== DRAFT SIMULATOR ===== */
+// 32-team first-round order; Nashville holds pick #10. Order repeats for rounds 2-7.
+const DRAFT_ORDER=["Toronto","San Jose","Vancouver","Chicago","Buffalo","Philadelphia","Seattle","Pittsburgh","Detroit","NASHVILLE","Boston","Anaheim","NY Islanders","Calgary","Columbus","Montreal","NY Rangers","St. Louis","Ottawa","Utah","Minnesota","New Jersey","Tampa Bay","Vegas","LA Kings","Colorado","Carolina","Edmonton","Florida","Dallas","Winnipeg","Washington"];
+const TOTAL_ROUNDS=7;
+let simPicked=[]; // {pid, team, overall, round}
+let simPickIdx=0; // 0-based overall pick index
+let _ss=42; const _sr=()=>{_ss=(_ss*1103515245+12345)&0x7fffffff;return _ss/0x7fffffff;};
+
+function teamOnClock(){return DRAFT_ORDER[simPickIdx%32];}
+function curRound(){return Math.floor(simPickIdx/32)+1;}
+function availablePros(){const taken=new Set(simPicked.map(s=>s.pid));return PROS.filter(p=>!taken.has(p.id));}
+
+// each team carries positional needs (weights); AI blends best-available with need
+const TEAM_NEEDS={
+  Toronto:{C:1.3,D:1.1,G:1.4},"San Jose":{D:1.4,RW:1.2},Vancouver:{C:1.3,LW:1.2},Chicago:{D:1.3,RW:1.2},
+  Buffalo:{G:1.4,C:1.2},Philadelphia:{C:1.3,D:1.2},Seattle:{C:1.2,D:1.2},Pittsburgh:{D:1.4,C:1.3},
+  Detroit:{G:1.3,D:1.2},NASHVILLE:{C:1.4,D:1.2},Boston:{C:1.3,LW:1.2},Anaheim:{D:1.2,G:1.2},
+  "NY Islanders":{RW:1.3,D:1.2},Calgary:{C:1.3,LW:1.2},Columbus:{C:1.2,G:1.3},Montreal:{RW:1.3,C:1.2},
+  "NY Rangers":{D:1.3,C:1.2},"St. Louis":{D:1.2,RW:1.2},Ottawa:{D:1.3,G:1.2},Utah:{C:1.2,G:1.3},
+  Minnesota:{C:1.3,D:1.1},"New Jersey":{RW:1.3,D:1.1},"Tampa Bay":{D:1.3,C:1.2},Vegas:{C:1.2,D:1.2},
+  "LA Kings":{RW:1.3,C:1.2},Colorado:{C:1.3,G:1.3},Carolina:{C:1.2,G:1.3},Edmonton:{D:1.4,G:1.3},
+  Florida:{C:1.2,D:1.2},Dallas:{D:1.2,LW:1.2},Winnipeg:{C:1.3,RW:1.2},Washington:{C:1.3,D:1.2}
+};
+let simNeedAware=true;
+function aiPick(){
+  const avail=availablePros();if(!avail.length)return null;
+  const team=teamOnClock();const needs=TEAM_NEEDS[team]||{};
+  const pool=[...avail].sort((a,b)=>a.rank-b.rank).slice(0,8);
+  if(!simNeedAware){const idx=Math.floor(Math.pow(_sr(),2)*Math.min(5,pool.length));return pool[idx];}
+  // score = consensus value (inverse rank) * need multiplier, small noise
+  const scored=pool.map(p=>{
+    const baseVal=100-p.rank*0.4;const need=needs[p.pos]||1;
+    return {p,score:baseVal*need*(0.92+_sr()*0.16)};});
+  scored.sort((a,b)=>b.score-a.score);
+  return scored[0].p;
+}
+function makePick(pid){
+  const round=curRound();
+  simPicked.push({pid,team:teamOnClock(),overall:simPickIdx+1,round});
+  simPickIdx++;
+  renderSim();renderDraftedClass();
+}
+function advanceToNashvilleOrEnd(){
+  // auto-pick for all non-Nashville teams until Nashville is on the clock or draft ends
+  let guard=0;
+  while(simPickIdx<32*TOTAL_ROUNDS && teamOnClock()!=='NASHVILLE' && guard<300){
+    const p=aiPick();if(!p)break;makePickSilent(p.id);guard++;
+  }
+  renderSim();
+}
+function makePickSilent(pid){
+  simPicked.push({pid,team:teamOnClock(),overall:simPickIdx+1,round:curRound()});
+  simPickIdx++;
+}
+
+function renderSim(){
+  const onClock=teamOnClock();const round=curRound();const done=simPickIdx>=32*TOTAL_ROUNDS;
+  document.getElementById('simRound').textContent=done?'Draft complete':`Round ${round} · pick ${simPickIdx+1} overall`;
+  document.getElementById('simStatus').textContent=done?`${simPicked.length} picks made`:`${onClock} on the clock`;
+  const clock=document.getElementById('simClock');
+  if(done){
+    clock.innerHTML=draftGrade();
+  }
+  else if(onClock==='NASHVILLE'){
+    clock.innerHTML=`<div style="background:var(--gold-bg);border:1px solid var(--gold);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-family:var(--disp);font-weight:800;font-size:15px;color:var(--gold-deep)">🎯 NASHVILLE on the clock — pick #${simPickIdx+1}</div></div>
+      <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">
+        <button class="trade-btn" id="tradeUp" style="padding:7px 12px;border-radius:8px;border:1px solid var(--navy);background:var(--panel);color:var(--navy);font-family:var(--body);font-size:12px;font-weight:600;cursor:pointer">▲ Trade up (−future pick)</button>
+        <button class="trade-btn" id="tradeDown" style="padding:7px 12px;border-radius:8px;border:1px solid var(--navy);background:var(--panel);color:var(--navy);font-family:var(--body);font-size:12px;font-weight:600;cursor:pointer">▼ Trade down (+pick, +asset)</button>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--slate);align-self:center">or draft below</span>
+      </div></div>`;
+    setTimeout(()=>{
+      const tu=document.getElementById('tradeUp'),td=document.getElementById('tradeDown');
+      if(tu)tu.addEventListener('click',()=>tradeMove(-4));
+      if(td)td.addEventListener('click',()=>tradeMove(+6));
+    },0);
+  } else {
+    clock.innerHTML=`<div style="display:flex;align-items:center;gap:12px">
+      <span style="font-family:var(--body);font-size:14px;color:var(--ink)"><b>${onClock}</b> is picking…</span>
+      <button id="simSim" style="margin-left:auto;padding:9px 16px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-family:var(--body);font-weight:700;font-size:13px;cursor:pointer">Sim to our pick ▶</button></div>`;
+    document.getElementById('simSim').addEventListener('click',advanceToNashvilleOrEnd);
+  }
+  // available board (top 12 by current sort: consensus)
+  const av=availablePros().sort((a,b)=>a.rank-b.rank).slice(0,12);
+  const isNash=onClock==='NASHVILLE'&&!done;
+  document.getElementById('simAvail').innerHTML=av.length?`
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Best available</div>
+    ${av.map(p=>`<div class="sim-row" data-id="${p.id}" style="display:grid;grid-template-columns:30px 1fr auto auto;gap:12px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;${isNash?'cursor:pointer':''}">
+      <span style="font-family:var(--disp);font-weight:700;color:var(--slate)">${p.rank}</span>
+      <div><span style="font-weight:600;color:var(--ink);font-size:13px">${p.name}</span><span class="pos">${p.pos}</span>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.league} · Fit ${fitPct(p)}%</div></div>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--gold-deep);font-weight:700">${fitPct(p)}%</span>
+      ${isNash?`<button class="simDraft chip" data-id="${p.id}" style="border-color:var(--gold);color:var(--gold-deep)">Draft</button>`:'<span></span>'}
+    </div>`).join('')}`:'<div style="color:var(--muted);font-family:var(--mono);font-size:12px">Board exhausted</div>';
+  if(isNash){document.querySelectorAll('.simDraft').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();makePick(+b.dataset.id);}));}
+  // log
+  document.getElementById('simLog').innerHTML=simPicked.length?simPicked.slice().reverse().map(s=>{
+    const p=PROS.find(x=>x.id===s.pid);const nash=s.team==='NASHVILLE';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line-soft);${nash?'background:var(--gold-bg);border-radius:7px;padding-left:10px':''}">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);min-width:34px">#${s.overall}</span>
+      <div style="flex:1"><span style="font-weight:600;color:var(--ink);font-size:12.5px">${p.name}</span><span class="pos">${p.pos}</span>
+        <div style="font-family:var(--mono);font-size:10px;color:${nash?'var(--gold-deep)':'var(--muted)'}">${s.team}</div></div>
+    </div>`;}).join(''):'<div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:8px">No picks yet. Start the draft below.</div>';
+  if(typeof renderDraftedClass==='function')renderDraftedClass();
+}
+/* ---- trades: logged asset swaps (don't corrupt the running order) ---- */
+let tradeLog=[];
+function tradeMove(delta){
+  if(delta>0){
+    // trade down: let `delta` teams pick ahead, bank an extra later pick
+    let moved=0;
+    while(moved<delta && simPickIdx<32*TOTAL_ROUNDS){
+      if(teamOnClock()==='NASHVILLE'){ // skip our slot forward by auto-advancing it as a "moved" pick we no longer use here
+        // represent trade-down: we decline this slot, AI behind us effectively moves up
+      }
+      const p=aiPick();if(!p)break;makePickSilent(p.id);moved++;
+    }
+    tradeLog.push(`Traded down ${delta} → banked an extra 3rd-round pick`);
+  } else {
+    tradeLog.push(`Traded up ${Math.abs(delta)} → cost: next 2nd-round pick`);
+  }
+  renderSim();
+}
+
+/* ---- post-draft class grade ---- */
+function draftGrade(){
+  const myPicks=simPicked.filter(s=>s.team==='NASHVILLE').map(s=>PROS.find(p=>p.id===s.pid));
+  if(!myPicks.length)return `<div style="text-align:center;padding:20px;color:var(--muted)">Draft complete — no Nashville picks made.</div>`;
+  // value captured = sum of (board value - pick cost); fit = avg fitPct; balance = position spread
+  let valueScore=0;myPicks.forEach((p,i)=>{const slot=simPicked.filter(s=>s.team==='NASHVILLE')[i].overall;valueScore+=(slot-p.rank);});
+  const avgFit=Math.round(myPicks.reduce((s,p)=>s+fitPct(p),0)/myPicks.length);
+  const posSet=new Set(myPicks.map(p=>p.pos));const balance=posSet.size;
+  // composite -> letter
+  const composite=Math.min(100,Math.max(20, 55 + valueScore*0.8 + (avgFit-65)*1.1 + balance*3));
+  const letter=composite>=90?'A+':composite>=85?'A':composite>=80?'A−':composite>=75?'B+':composite>=68?'B':composite>=60?'B−':composite>=52?'C+':'C';
+  const col=composite>=80?'var(--green)':composite>=65?'var(--gold-deep)':'var(--red)';
+  return `<div style="text-align:center;padding:6px 0 14px">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px">Nashville Draft Class Grade</div>
+    <div style="font-family:var(--disp);font-size:54px;font-weight:800;color:${col};line-height:1">${letter}</div>
+    <div style="display:flex;justify-content:center;gap:22px;margin-top:14px;flex-wrap:wrap">
+      <div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:var(--ink)">${myPicks.length}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">PICKS</div></div>
+      <div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:${valueScore>=0?'var(--green)':'var(--red)'}">${valueScore>=0?'+':''}${valueScore}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">VALUE vs SLOT</div></div>
+      <div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:var(--gold-deep)">${avgFit}%</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">AVG FIT</div></div>
+      <div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:var(--navy)">${balance}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">POSITIONS</div></div>
+    </div>
+    ${tradeLog.length?`<div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--slate)">${tradeLog.join(' · ')}</div>`:''}
+    <div style="margin-top:14px;font-size:12px;color:var(--slate);max-width:380px;margin-left:auto;margin-right:auto;line-height:1.5">${gradeNote(valueScore,avgFit,balance)}</div>
+  </div>`;
+}
+function gradeNote(v,f,b){
+  const bits=[];
+  bits.push(v>=8?'Strong value — you let the board fall to you.':v>=0?'Fair value relative to slot.':'You reached on multiple picks.');
+  bits.push(f>=78?'Excellent fit to the Smashville Way.':f>=70?'Solid identity fit.':'Class skews off-identity.');
+  bits.push(b>=4?'Good positional balance.':'Position-concentrated class.');
+  return bits.join(' ');
+}
+document.getElementById('simReset').addEventListener('click',()=>{simPicked=[];simPickIdx=0;_ss=42;tradeLog=[];renderSim();});
+renderSim();
+
+/* ===== 10 MODEL LAB ===== */
+// shared confidence/uncertainty model — used to widen or tighten projection bands
+function sampleStrength(p){
+  // league quality weight
+  const lq={NCAA:.95,SHL:.95,Liiga:.9,OHL:.85,WHL:.85,QMJHL:.8,Allsv:.8,USHL:.72,MHL:.7,U20:.65,Jr:.55}[p.league]||.6;
+  // higher consensus rank = more eyes on him = stronger sample
+  const eyes=Math.max(.4,1-(p.rank-1)/120);
+  // grade adds conviction
+  const g=p.grade?0.08*p.grade/5:0;
+  return Math.min(0.99, lq*0.5+eyes*0.42+g);
+}
+function modelRead(p){
+  const off=p.off||55,iq=Math.round((p.pace+p.compete)/2),tr=p.trans||55,sho=p.sho||55,def=p.dResp;
+  // expected peak points (skaters); goalies handled separately
+  const base=44; // league-baseline points anchor
+  const contrib=[
+    ["Offense", (off-60)*0.55],
+    ["Transition",(tr-60)*0.32],
+    ["Shot",(sho-60)*0.28],
+    ["Hockey IQ",(iq-60)*0.3],
+    ["Defense",(def-60)*0.12]
+  ];
+  const exp=Math.round(base+contrib.reduce((s,c)=>s+c[1],0));
+  const ss=sampleStrength(p);
+  const conf=Math.round(ss*100);
+  // band width inversely related to confidence + attribute spread
+  const attrs=[off,iq,tr,sho,def];const mean=attrs.reduce((a,b)=>a+b,0)/attrs.length;
+  const spread=Math.sqrt(attrs.reduce((s,v)=>s+(v-mean)**2,0)/attrs.length);
+  // LOOP 1: Smashville Way identity-fit certainty.
+  // If the player is strong in the traits the Way weights heavily, the org "knows what it's getting"
+  // → higher fit-certainty, slightly tighter band. Stylistic outliers carry more uncertainty.
+  let fitCert=0.7;
+  try{
+    const idW=WAY.identity.pct, total=WAY.identity.pct+WAY.value.pct+WAY.need.pct||1;
+    const idTraits=WAY.identity.traits; // forecheck/pace/compete
+    const idScore=(p.forecheck*idTraits.forecheck+p.pace*idTraits.pace+p.compete*idTraits.compete)/
+      (idTraits.forecheck+idTraits.pace+idTraits.compete||1);
+    // certainty rises when player matches the emphasized identity and the org has a clear identity (high idW)
+    const clarity=idW/total; // how identity-driven the Way is
+    fitCert=Math.max(.35,Math.min(.97, 0.5 + (idScore-60)/90 + clarity*0.18));
+  }catch(e){}
+  const width=Math.round((1-ss)*22 + (1-fitCert)*10 + spread*0.22 + 5);
+  const band=[Math.max(8,exp-width),exp+width];
+  const bust=Math.round(Math.max(4,Math.min(60,(1-ss)*45 + Math.max(0,60-def)*0.4 - (off-60)*0.2)));
+  return {exp,band,conf,ss,bust,contrib,base,fitCert,off,iq,tr,sho,def};
+}
+
+let modelSel=PROS[0].id;
+function renderModelPicker(){
+  const top=PROS.slice(0,10);
+  document.getElementById('modelPick').innerHTML=top.map(p=>`
+    <button class="mtgt ${p.id===modelSel?'on':''}" data-id="${p.id}"
+      style="text-align:left;padding:10px 13px;border-radius:10px;border:1px solid ${p.id===modelSel?'var(--gold)':'var(--line)'};
+      background:${p.id===modelSel?'var(--gold-bg)':'var(--panel)'};cursor:pointer;box-shadow:var(--shadow);transition:.14s">
+      <div style="font-family:var(--disp);font-weight:700;color:var(--ink);font-size:12.5px">${p.name}</div>
+      <div style="font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:2px">#${p.rank} · ${p.pos}</div></button>`).join('');
+  document.querySelectorAll('.mtgt').forEach(b=>b.addEventListener('click',()=>{modelSel=+b.dataset.id;renderModel();}));
+}
+function drawWaterfall(p,m){
+  const svg=document.getElementById('waterfall');const W=520,H=300,P={l:90,r:40,t:16,b:30};
+  const items=[["Baseline",m.base,'base'],...m.contrib.map(c=>[c[0],c[1],'d'])];
+  // cumulative
+  let cum=0;const steps=[];
+  items.forEach(([lab,val,type])=>{const start=type==='base'?0:cum;const end=type==='base'?val:cum+val;steps.push({lab,val,type,start,end});cum=end;});
+  steps.push({lab:"Projection",val:m.exp,type:'total',start:0,end:m.exp});
+  const allV=steps.flatMap(s=>[s.start,s.end]);const lo=Math.min(0,...allV),hi=Math.max(...allV);
+  const X=v=>P.l+(v-lo)/(hi-lo)*(W-P.l-P.r);
+  const rowH=(H-P.t-P.b)/steps.length;
+  let s='';
+  s+=`<line x1="${X(0)}" y1="${P.t}" x2="${X(0)}" y2="${H-P.b}" stroke="var(--line)" stroke-width="1"/>`;
+  steps.forEach((st,i)=>{
+    const y=P.t+rowH*i+rowH/2;const x1=X(Math.min(st.start,st.end)),x2=X(Math.max(st.start,st.end));
+    const col=st.type==='base'?'var(--slate)':st.type==='total'?'var(--navy)':(st.val>=0?'var(--green)':'var(--red)');
+    s+=`<text x="${P.l-10}" y="${y+4}" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">${st.lab}</text>`;
+    s+=`<rect x="${x1}" y="${y-9}" width="${Math.max(2,x2-x1)}" height="18" rx="3" fill="${col}" opacity="${st.type==='d'?.8:1}"/>`;
+    const tv=st.type==='d'?(st.val>=0?'+':'')+Math.round(st.val):Math.round(st.end);
+    s+=`<text x="${x2+6}" y="${y+4}" font-family="var(--mono)" font-size="10" fill="var(--slate)">${tv}</text>`;
+  });
+  svg.innerHTML=s;
+}
+function drawOutcomeDist(p,m){
+  const svg=document.getElementById('outcomeDist');const W=520,H=300,P={l:20,r:20,t:18,b:34};
+  const lo=Math.max(0,m.band[0]-15),hi=m.band[1]+15;const bins=60;
+  const mu=m.exp,sig=(m.band[1]-m.band[0])/2.56; // 80% band ~ ±1.28σ
+  const dens=[];for(let b=0;b<bins;b++){const x=lo+(hi-lo)*b/(bins-1);dens.push(Math.exp(-((x-mu)**2)/(2*sig*sig)));}
+  const mx=Math.max(...dens);
+  const X=b=>P.l+b/(bins-1)*(W-P.l-P.r),Y=d=>H-P.b-d/mx*(H-P.t-P.b);
+  let path='',area='';dens.forEach((d,b)=>{const x=X(b),y=Y(d);path+=(b===0?'M':'L')+x+' '+y+' ';});
+  area=path+`L${X(bins-1)} ${H-P.b} L${X(0)} ${H-P.b} Z`;
+  // band shading
+  const bx=v=>P.l+(v-lo)/(hi-lo)*(W-P.l-P.r);
+  let s=`<defs><linearGradient id="odg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)" stop-opacity=".35"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>`;
+  s+=`<rect x="${bx(m.band[0])}" y="${P.t}" width="${bx(m.band[1])-bx(m.band[0])}" height="${H-P.t-P.b}" fill="var(--gold-bg)"/>`;
+  s+=`<path d="${area}" fill="url(#odg)"/><path d="${path}" fill="none" stroke="var(--gold-deep)" stroke-width="2"/>`;
+  s+=`<line x1="${bx(mu)}" y1="${P.t}" x2="${bx(mu)}" y2="${H-P.b}" stroke="var(--navy)" stroke-width="2" stroke-dasharray="5 3"/>`;
+  [lo,Math.round((lo+hi)/2),hi].forEach(v=>{s+=`<text class="axis-txt" x="${bx(v)}" y="${H-P.b+18}" text-anchor="middle">${Math.round(v)}</text>`;});
+  s+=`<text x="${bx(mu)}" y="${P.t-2}" text-anchor="middle" fill="var(--navy)" font-family="var(--mono)" font-size="10" font-weight="700">${mu} pts</text>`;
+  s+=`<text x="${bx(m.band[0])}" y="${H-P.b+18}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="9">${m.band[0]}</text>`;
+  s+=`<text x="${bx(m.band[1])}" y="${H-P.b+18}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="9">${m.band[1]}</text>`;
+  svg.innerHTML=s;
+}
+function drawCalibration(){
+  const svg=document.getElementById('calibration');const W=520,H=300,P={l:44,r:18,t:18,b:38};
+  const X=v=>P.l+v/100*(W-P.l-P.r),Y=v=>H-P.b-v/100*(H-P.t-P.b);
+  let s='';
+  for(let g=0;g<=100;g+=25){s+=`<line class="grid-line" x1="${X(g)}" y1="${P.t}" x2="${X(g)}" y2="${H-P.b}" stroke="var(--line)"/>`;
+    s+=`<line class="grid-line" x1="${P.l}" y1="${Y(g)}" x2="${W-P.r}" y2="${Y(g)}" stroke="var(--line)"/>`;
+    s+=`<text class="axis-txt" x="${X(g)}" y="${H-P.b+16}" text-anchor="middle">${g}</text>`;
+    s+=`<text class="axis-txt" x="${P.l-7}" y="${Y(g)+3}" text-anchor="end">${g}</text>`;}
+  // perfect calibration diagonal
+  s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(100)}" y2="${Y(100)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  // model calibration curve (synthetic, slightly under-confident at extremes)
+  const pts=[[0,2],[20,17],[40,38],[60,62],[80,83],[100,97]];
+  let path='';pts.forEach((pt,i)=>{path+=(i===0?'M':'L')+X(pt[0])+' '+Y(pt[1])+' ';});
+  s+=`<path d="${path}" fill="none" stroke="var(--navy)" stroke-width="2.5"/>`;
+  pts.forEach(pt=>{s+=`<circle cx="${X(pt[0])}" cy="${Y(pt[1])}" r="4" fill="var(--navy)"/>`;});
+  s+=`<text class="axis-txt" x="${(P.l+W-P.r)/2}" y="${H-3}" text-anchor="middle">Model predicted %</text>`;
+  s+=`<text class="axis-txt" transform="rotate(-90)" x="${-H/2}" y="12" text-anchor="middle">Actual outcome %</text>`;
+  svg.innerHTML=s;
+}
+function drawLearning(p,m){
+  const svg=document.getElementById('learning');const W=520,H=300,P={l:44,r:18,t:18,b:38};
+  // x = sample size (viewings/comparables), y = band width (uncertainty)
+  const X=v=>P.l+v/100*(W-P.l-P.r),Y=v=>H-P.b-v/40*(H-P.t-P.b);
+  let s='';
+  for(let g=0;g<=40;g+=10){s+=`<line class="grid-line" x1="${P.l}" y1="${Y(g)}" x2="${W-P.r}" y2="${Y(g)}" stroke="var(--line)"/>`;
+    s+=`<text class="axis-txt" x="${P.l-7}" y="${Y(g)+3}" text-anchor="end">±${g}</text>`;}
+  [0,25,50,75,100].forEach(g=>s+=`<text class="axis-txt" x="${X(g)}" y="${H-P.b+16}" text-anchor="middle">${g}%</text>`);
+  // curve: uncertainty decays with sample strength
+  let path='';for(let x=0;x<=100;x+=4){const w=4+ (1-x/100)**1.4*34;path+=(x===0?'M':'L')+X(x)+' '+Y(w)+' ';}
+  s+=`<path d="${path}" fill="none" stroke="var(--navy)" stroke-width="2.5"/>`;
+  // this player's current position
+  const px=m.ss*100,pw=(m.band[1]-m.band[0])/2;
+  s+=`<circle cx="${X(px)}" cy="${Y(Math.min(40,pw))}" r="7" fill="var(--gold)" stroke="var(--navy)" stroke-width="2"/>`;
+  s+=`<text x="${X(px)}" y="${Y(Math.min(40,pw))-13}" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="10" font-weight="700">${p.name.split(' ').pop()}</text>`;
+  s+=`<text class="axis-txt" x="${(P.l+W-P.r)/2}" y="${H-3}" text-anchor="middle">Sample strength →</text>`;
+  s+=`<text class="axis-txt" transform="rotate(-90)" x="${-H/2}" y="12" text-anchor="middle">Band width (uncertainty)</text>`;
+  svg.innerHTML=s;
+}
+/* ---- Bayesian update: prior -> posterior on a new A-grade viewing ---- */
+let bayesAdded=false;
+function drawBayes(p,m){
+  const svg=document.getElementById('bayes');const W=520,H=300,P={l:20,r:20,t:18,b:34};
+  const lo=Math.max(0,m.band[0]-18),hi=m.band[1]+18;const bins=60;
+  const priMu=m.exp, priSig=(m.band[1]-m.band[0])/2.56;
+  // a strong new viewing (A grade) = likelihood centered a bit higher, fairly tight
+  const likeMu=priMu+6, likeSig=priSig*0.6;
+  // conjugate normal update
+  const postSig=Math.sqrt(1/(1/priSig**2 + 1/likeSig**2));
+  const postMu=(priMu/priSig**2 + likeMu/likeSig**2)*postSig**2;
+  const X=v=>P.l+(v-lo)/(hi-lo)*(W-P.l-P.r);
+  const curve=(mu,sig)=>{let pts=[];for(let b=0;b<bins;b++){const x=lo+(hi-lo)*b/(bins-1);pts.push([x,Math.exp(-((x-mu)**2)/(2*sig*sig))]);}return pts;};
+  const pri=curve(priMu,priSig), post=curve(postMu,postSig);
+  const mx=Math.max(...pri.map(d=>d[1]),...post.map(d=>d[1]));
+  const Y=d=>H-P.b-d/mx*(H-P.t-P.b);
+  const toPath=pts=>pts.map((d,i)=>(i===0?'M':'L')+X(d[0])+' '+Y(d[1])).join(' ');
+  let s='';
+  // prior (always shown, gray)
+  s+=`<path d="${toPath(pri)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="${bayesAdded?'4 3':'0'}"/>`;
+  s+=`<text x="${X(priMu)}" y="${Y(mx)+2}" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)" font-size="9">prior ${Math.round(priMu)}</text>`;
+  if(bayesAdded){
+    s+=`<path d="${toPath(post)}" fill="none" stroke="var(--gold-deep)" stroke-width="2.5"/>`;
+    s+=`<line x1="${X(postMu)}" y1="${P.t}" x2="${X(postMu)}" y2="${H-P.b}" stroke="var(--gold-deep)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    s+=`<text x="${X(postMu)}" y="${P.t+10}" text-anchor="middle" fill="var(--gold-deep)" font-family="var(--mono)" font-size="10" font-weight="700">posterior ${Math.round(postMu)}</text>`;
+  } else {
+    s+=`<text x="${(P.l+W-P.r)/2}" y="${H/2}" text-anchor="middle" fill="var(--muted)" font-family="var(--body)" font-size="12">Add a viewing to see the belief update →</text>`;
+  }
+  [lo,Math.round((lo+hi)/2),hi].forEach(v=>s+=`<text class="axis-txt" x="${X(v)}" y="${H-P.b+18}" text-anchor="middle">${Math.round(v)}</text>`);
+  svg.innerHTML=s;
+}
+/* ---- development curve: age progression with widening cone ---- */
+function drawDevCurve(p,m){
+  const svg=document.getElementById('devCurve');const W=520,H=300,P={l:40,r:20,t:18,b:38};
+  const years=7;const peak=m.exp;
+  // canonical NHL forward curve: ramp to peak ~ year 4-5, slight taper
+  const shape=[0.45,0.68,0.85,0.97,1.0,0.98,0.93];
+  const X=i=>P.l+i/(years-1)*(W-P.l-P.r);
+  const yMax=Math.round(peak*1.25+10);
+  const Y=v=>H-P.b-v/yMax*(H-P.t-P.b);
+  let s='';
+  for(let g=0;g<=yMax;g+=20){s+=`<line class="grid-line" x1="${P.l}" y1="${Y(g)}" x2="${W-P.r}" y2="${Y(g)}" stroke="var(--line)"/>`;
+    s+=`<text class="axis-txt" x="${P.l-7}" y="${Y(g)+3}" text-anchor="end">${g}</text>`;}
+  // cone: uncertainty grows with year and shrinks with confidence
+  const mid=shape.map((f)=>peak*f);
+  const spread=shape.map((f,i)=>(m.band[1]-m.band[0])/2 * (0.6+i*0.13) * (1.1-m.ss*0.4));
+  let cone=mid.map((v,i)=>(i===0?'M':'L')+X(i)+' '+Y(v+spread[i])).join(' ');
+  for(let i=years-1;i>=0;i--){cone+='L'+X(i)+' '+Y(Math.max(0,mid[i]-spread[i]));}
+  cone+='Z';
+  s+=`<path d="${cone}" fill="var(--gold)" opacity=".16"/>`;
+  const midPath=mid.map((v,i)=>(i===0?'M':'L')+X(i)+' '+Y(v)).join(' ');
+  s+=`<path d="${midPath}" fill="none" stroke="var(--gold-deep)" stroke-width="2.5"/>`;
+  mid.forEach((v,i)=>s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="var(--gold-deep)"/>`);
+  for(let i=0;i<years;i++)s+=`<text class="axis-txt" x="${X(i)}" y="${H-P.b+16}" text-anchor="middle">Y${i+1}</text>`;
+  s+=`<text class="axis-txt" x="${(P.l+W-P.r)/2}" y="${H-2}" text-anchor="middle">NHL season</text>`;
+  s+=`<text class="axis-txt" transform="rotate(-90)" x="${-H/2}" y="11" text-anchor="middle">Projected points</text>`;
+  svg.innerHTML=s;
+}
+/* ---- sensitivity: which +10 attribute moves projection most ---- */
+function drawSensitivity(p,m){
+  const svg=document.getElementById('sensitivity');const W=520,H=300,P={l:90,r:50,t:16,b:24};
+  const feats=[["Offense",0.55],["Hockey IQ",0.30],["Transition",0.32],["Shot",0.28],["Defense",0.12]];
+  const deltas=feats.map(([n,w])=>[n,+(10*w).toFixed(1)]).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(...deltas.map(d=>d[1]));
+  const rowH=(H-P.t-P.b)/deltas.length;
+  const X=v=>P.l+v/mx*(W-P.l-P.r);
+  let s='';
+  deltas.forEach((d,i)=>{const y=P.t+rowH*i+rowH/2;
+    s+=`<text x="${P.l-10}" y="${y+4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--ink)">${d[0]}</text>`;
+    s+=`<rect x="${P.l}" y="${y-9}" width="${X(d[1])-P.l}" height="18" rx="4" fill="var(--navy)" opacity="${.55+i*0+.4*(d[1]/mx)}"/>`;
+    s+=`<text x="${X(d[1])+6}" y="${y+4}" font-family="var(--mono)" font-size="10" fill="var(--slate)">+${d[1]} pts</text>`;});
+  svg.innerHTML=s;
+}
+function renderModel(){
+  const p=PROS.find(x=>x.id===modelSel)||PROS[0];const m=modelRead(p);
+  document.getElementById('mPts').textContent=m.exp;
+  document.getElementById('mBand').textContent=`80% band ${m.band[0]}–${m.band[1]} pts`;
+  document.getElementById('mConf').textContent=m.conf+'%';
+  document.getElementById('mConfWhy').textContent=m.conf>=80?'strong, consistent signals':m.conf>=60?'moderate evidence':'thin / volatile sample';
+  document.getElementById('mSample').textContent=Math.round(m.ss*100)+'%';
+  document.getElementById('mBust').textContent=m.bust+'%';
+  const fc=Math.round(m.fitCert*100);
+  document.getElementById('mFitCert').textContent=fc+'%';
+  document.getElementById('mFitWhy').textContent=fc>=80?'classic Smashville profile':fc>=60?'reasonable identity match':'stylistic outlier — more variance';
+  bayesAdded=false; // reset on player change
+  renderModelPicker();drawWaterfall(p,m);drawOutcomeDist(p,m);drawCalibration();drawLearning(p,m);
+  drawBayes(p,m);drawDevCurve(p,m);drawSensitivity(p,m);
+}
+document.getElementById('bayesBtn').addEventListener('click',()=>{
+  bayesAdded=!bayesAdded;
+  document.getElementById('bayesBtn').textContent=bayesAdded?'− Remove viewing':'+ Add a viewing (A grade)';
+  const p=PROS.find(x=>x.id===modelSel)||PROS[0];drawBayes(p,modelRead(p));
+});
+renderModel();
+renderDisagreement();
+
+/* methodology appendix from the registry */
+(function(){
+  const el=document.getElementById('methodAppendix');if(!el)return;
+  el.innerHTML=Object.values(METHOD).map(m=>`
+    <div style="padding:13px 0;border-bottom:1px solid var(--line-soft)">
+      <div style="font-family:var(--disp);font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:5px">${m.t}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--navy);background:var(--field);border-radius:6px;padding:6px 9px;margin-bottom:6px;display:inline-block">${m.f}</div>
+      <div style="font-size:12.5px;color:var(--slate);line-height:1.55">${m.d}</div>
+    </div>`).join('');
+})();
+
+/* ===== LOOP 2: drafted class -> Future Lineup ===== */
+function renderDraftedClass(){
+  // LOOP 2: drafted Nashville picks become available players in the Future Lineup
+  const picks=simPicked.filter(s=>s.team==='NASHVILLE').map(s=>({...s,p:PROS.find(x=>x.id===s.pid)}));
+  function readyYear(p,overall){
+    const base= overall<=10?1:overall<=32?2:overall<=64?3:4;
+    const leagueBoost={NCAA:-0.4,SHL:-0.3,Liiga:-0.2}[p.league]||0;
+    return 2026+Math.max(1,Math.round(base+leagueBoost+(p.pos==='G'?1:0)));
+  }
+  // remove previously-injected drafted players, re-add current
+  for(let i=luFarm.length-1;i>=0;i--){if(luFarm[i].drafted)luFarm.splice(i,1);}
+  picks.forEach(({p,overall})=>{
+    luFarm.push({id:'draft_'+p.id,n:p.name.split(' ').slice(-1)[0],full:p.name,pos:p.pos==='G'?'G':p.pos,
+      cap:0.9,end:2099,age:18,eta:readyYear(p,overall),prospect:true,drafted:true});
+  });
+  // reset placements so new players can auto-slot, then refresh if lineup visible
+  luPlacement={};
+  if(typeof renderLineup==='function'&&document.getElementById('view-lineup'))renderLineup();
+}
+renderLineup();
+
+</script>
+<script>
+const crumbMap={dash:"Command Center",cap:"Roster & Cap",value:"Player Value",tree:"Scouting Tree",lab:"Comparison Lab",draft:"Draft Value",finance:"Finance & Forecast",lineup:"Future Lineup",mock:"Mock Draft",model:"Model Lab",ai:"AI Architect",brief:"The Brief"};
+document.querySelectorAll('.nav-item').forEach(it=>it.addEventListener('click',()=>{
+  const v=it.dataset.v;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(n=>n.classList.remove('active'));
+  it.classList.add('active');document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('crumb').textContent=crumbMap[v];
+  document.getElementById('sidebar').classList.remove('open');
+}));
+document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+const tog=document.getElementById('themeTog');
+tog.addEventListener('click',()=>{
+  const h=document.documentElement,dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('togLabel').textContent=dark?'Dark mode':'Light mode';
+});
+const dTog=document.getElementById('densityTog');
+dTog.addEventListener('click',()=>{
+  const h=document.documentElement,compact=h.getAttribute('data-density')==='compact';
+  h.setAttribute('data-density',compact?'comfortable':'compact');
+  document.getElementById('densityLabel').textContent=compact?'Compact':'Comfortable';
+});
+
+/* ===== helper: navigate to a module programmatically ===== */
+function goTo(v){const it=document.querySelector(`.nav-item[data-v="${v}"]`);if(it)it.click();}
+
+/* brief print + export */
+(function(){
+  const pb=document.getElementById('briefPrint'),sb=document.getElementById('briefSnap');
+  if(pb)pb.addEventListener('click',()=>window.print());
+  if(sb)sb.addEventListener('click',()=>{if(typeof exportSnapshot==='function')exportSnapshot(document.getElementById('briefSheet'),'macfarland_brief');});
+})();
+
+/* ===== GUIDED TOUR ===== */
+const TOUR=[
+  {v:'dash',t:'Welcome to the Command Center',b:'This is your home base. Headline numbers, clickable module tiles, the things that need attention, plus the real Predators roster and farm system. Everything starts here.'},
+  {v:'cap',t:'1 · See the cap problem',b:'The roster ledger ranks contracts by surplus value — production minus pay. The three red anchors (Stamkos, Skjei, Marchessault) are the 2024 free-agency overspend you inherited. Every number opens its own formula via the ⓘ icons.'},
+  {v:'mock',t:'2 · Define the Smashville Way',b:'Set what the team values with the weight sliders, and the whole 2026 draft board re-sorts to your identity. Filter the pool, grade players, and the Fit% updates live. This is the GM defining the team in real time.'},
+  {v:'mock',t:'3 · Plan the pick probabilistically',b:'Run 1,000 Monte Carlo drafts to see who is actually likely to reach #10, and check where your model disagrees with public consensus — the inefficiencies to exploit.'},
+  {v:'tree',t:'4 · Project any player with confidence',b:'The Scouting Tree is a live workbench. Drag attribute sliders and the outcome tiers, projected line, comps, and risk all recompute. Nothing is a single number — everything carries an uncertainty band.'},
+  {v:'model',t:'5 · Show your work',b:'The Model Lab makes the engine transparent: feature contributions, calibration, Bayesian updating as scouts file viewings, and how confidence grows with data. This is what survives the "how is that calculated?" question.'},
+  {v:'lineup',t:'6 · Forecast five years out',b:'Drag players across a five-year depth chart. Contracts expire, farm prospects and your drafted class arrive on schedule, and the cap recomputes each season. The whole suite connects into one loop.'},
+  {v:'brief',t:"That's the loop",b:'Define identity → evaluate → draft → forecast the roster. The Brief is your one-page leave-behind — print it to PDF or export it as an image. Now go build a contender.'}
+];
+let tourI=0;
+const tourEls={ov:document.getElementById('tourOverlay'),step:document.getElementById('tourStep'),title:document.getElementById('tourTitle'),body:document.getElementById('tourBody'),dots:document.getElementById('tourDots')};
+function renderTour(){
+  const s=TOUR[tourI];goTo(s.v);
+  tourEls.step.textContent=`Tour · ${tourI+1} of ${TOUR.length}`;
+  tourEls.title.textContent=s.t;tourEls.body.textContent=s.b;
+  tourEls.dots.innerHTML=TOUR.map((_,i)=>`<span class="tc-dot ${i===tourI?'on':''}"></span>`).join('');
+  document.getElementById('tourBack').style.visibility=tourI===0?'hidden':'visible';
+  document.getElementById('tourNext').textContent=tourI===TOUR.length-1?'Finish':'Next';
+}
+function startTour(){tourI=0;tourEls.ov.classList.add('on');renderTour();}
+function endTour(){tourEls.ov.classList.remove('on');}
+document.getElementById('demoBtn').addEventListener('click',startTour);
+document.getElementById('tourSkip').addEventListener('click',endTour);
+document.getElementById('tourBack').addEventListener('click',()=>{if(tourI>0){tourI--;renderTour();}});
+document.getElementById('tourNext').addEventListener('click',()=>{if(tourI<TOUR.length-1){tourI++;renderTour();}else endTour();});
+tourEls.ov.addEventListener('click',e=>{if(e.target===tourEls.ov)endTour();});
+
+/* ===== DASHBOARD ===== */
+(function(){
+  const tiles=[
+    ["cap","Roster & Cap","Contract efficiency & surplus value","M3 4h18v6H3zM3 14h18v6H3z","$58.8M committed"],
+    ["value","Player Value","Undervaluation model & buy-low board","M3 3v18h18M7 14l4-4 3 3 5-6","5 surplus assets"],
+    ["tree","Scouting Tree","Live projection workbench","M12 5v6M6 19l6-8 6 8","sliders + comps"],
+    ["mock","Mock Draft","Real 2026 board, fit & sim","M4 5h16M8 9h8M8 13h6","224 prospects"],
+    ["model","Model Lab","How every projection is built","M4 19V5M8 16l3-5 3 3 5-7","confidence + calibration"],
+    ["lineup","Future Lineup","Projected 2027-28 depth chart","M3 4h18v16H3zM9 4v16M15 4v16","draft class slots in"]
+  ];
+  document.getElementById('dashTiles').innerHTML=tiles.map(([v,h,p,path,stat])=>`
+    <div class="dash-tile" data-go="${v}">
+      <div class="dt-ic"><svg viewBox="0 0 24 24"><path d="${path}"/></svg></div>
+      <h3>${h}</h3><p>${p}</p><div class="dt-stat">${stat}</div></div>`).join('');
+  document.querySelectorAll('.dash-tile').forEach(t=>t.addEventListener('click',()=>goTo(t.dataset.go)));
+
+  const alerts=[
+    ["red","3 anchor contracts underwater","Stamkos −$3.7M, Skjei −$2.4M, Marchessault −$2.0M vs production","cap"],
+    ["gold","#10 pick — define your board","Set the Smashville Way and run the mock draft","mock"],
+    ["green","5 surplus contracts to protect","Young players beating their pay — extend early","value"],
+    ["navy","Farm: Molendyk & Kemell NHL-ready","Both project to arrive 2026-27","lineup"],
+    ["gold","Model flags board inefficiencies","See where your model diverges from consensus","mock"]
+  ];
+  document.getElementById('dashAlerts').innerHTML=alerts.map(([c,t,d,go])=>`
+    <div class="alert-row" data-go="${go}" style="cursor:pointer">
+      <span class="alert-dot" style="background:var(--${c==='navy'?'navy':c})"></span>
+      <div><div class="at">${t}</div><div class="ad">${d}</div></div></div>`).join('');
+  document.querySelectorAll('#dashAlerts .alert-row').forEach(a=>a.addEventListener('click',()=>goTo(a.dataset.go)));
+
+  // roster snapshot
+  const fmt=n=>'$'+n.toFixed(2)+'M';
+  const vc=s=>s>=1?'good':s<=-1?'bad':'mid';
+  document.querySelector('#dashRoster tbody').innerHTML=[...roster].sort((a,b)=>a.surplus-b.surplus).map(p=>`
+    <tr><td>${p.name}</td><td style="text-align:left"><span class="pos" style="margin:0">${p.pos}</span></td>
+    <td>${fmt(p.hit)}</td><td>${p.prod}</td>
+    <td class="val ${vc(p.surplus)}">${p.surplus>0?'+':''}${p.surplus.toFixed(1)}M</td></tr>`).join('');
+
+  // farm
+  document.querySelector('#dashFarm tbody').innerHTML=FARM.map(p=>`
+    <tr><td>${p.name}</td><td style="text-align:left"><span class="pos" style="margin:0">${p.pos}</span></td>
+    <td style="text-align:left;font-family:var(--body)">${p.drafted}</td>
+    <td style="text-align:left;font-family:var(--body)">${p.club}</td>
+    <td>${p.eta}</td><td style="text-align:left;font-family:var(--body)">${p.ceiling}</td>
+    <td><span class="pill ${p.grade.includes('+')?'green':'navy'}">${p.grade}</span></td></tr>`).join('');
+})();
+
+/* ===== GLOBAL SEARCH ===== */
+(function(){
+  const inp=document.getElementById('globalSearch'),box=document.getElementById('gsResults');
+  function buildIndex(){
+    const idx=[];
+    roster.forEach(p=>idx.push({name:p.name,meta:`${p.pos} · roster`,cat:'NHL Roster',go:'cap'}));
+    FARM.forEach(p=>idx.push({name:p.name,meta:`${p.pos} · ${p.eta}`,cat:'Farm System',go:'lineup'}));
+    if(typeof PROS!=='undefined')PROS.slice(0,96).forEach(p=>idx.push({name:p.name,meta:`${p.pos} · #${p.rank} · draft`,cat:'2026 Draft',go:'mock',pid:p.id}));
+    return idx;
+  }
+  let INDEX=[];
+  function search(q){
+    if(!INDEX.length)INDEX=buildIndex();
+    q=q.trim().toLowerCase();if(!q){box.classList.remove('open');return;}
+    const hits=INDEX.filter(x=>x.name.toLowerCase().includes(q)).slice(0,12);
+    if(!hits.length){box.innerHTML='<div class="gs-item"><span class="gn" style="color:var(--muted)">No players found</span></div>';box.classList.add('open');return;}
+    const byCat={};hits.forEach(h=>{(byCat[h.cat]=byCat[h.cat]||[]).push(h);});
+    box.innerHTML=Object.entries(byCat).map(([cat,items])=>
+      `<div class="gs-cat">${cat}</div>`+items.map(h=>
+        `<div class="gs-item" data-go="${h.go}" ${h.pid?`data-pid="${h.pid}"`:''}><span class="gn">${h.name}</span><span class="gm">${h.meta}</span></div>`).join('')).join('');
+    box.classList.add('open');
+    box.querySelectorAll('.gs-item[data-go]').forEach(it=>it.addEventListener('click',()=>{
+      const go=it.dataset.go,pid=it.dataset.pid;
+      box.classList.remove('open');inp.value='';
+      if(pid&&typeof deepDive==='function'){deepDive(+pid);}
+      else goTo(go);
+    }));
+  }
+  inp.addEventListener('input',e=>search(e.target.value));
+  inp.addEventListener('focus',e=>{if(e.target.value)search(e.target.value);});
+  document.addEventListener('click',e=>{if(!e.target.closest('.gsearch'))box.classList.remove('open');});
+})();
+
+/* ===== bind all info icons (re-bind after dynamic renders) ===== */
+bindInfos();
+const _origGoTo=goTo;
+window.addEventListener('load',()=>setTimeout(bindInfos,200));
+// re-bind on any nav click (dynamic content)
+document.querySelectorAll('.nav-item').forEach(it=>it.addEventListener('click',()=>setTimeout(bindInfos,60)));
+</script>
+</body>
+</html>
